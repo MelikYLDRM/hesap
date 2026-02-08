@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">Hesap</string>
+
+    <!-- Widget Descriptions -->
+    <string name="calculator_widget_description">Hızlı hesap makinesi widget\'ı. Ana ekrandan doğrudan hesaplama yapın.</string>
+    <string name="quick_access_widget_description">Hesap makinesini hızlıca açın.</string>
+
+    <!-- Widget Labels -->
+    <string name="widget_calculator_name">Hesap Makinesi</string>
+    <string name="widget_quick_access_name">Hızlı Hesapla</string>
+</resources>
