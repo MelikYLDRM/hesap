@@ -15,9 +15,12 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.melikyldrm.hesap.ui.theme.CalculatorTextStyles
 import com.melikyldrm.hesap.ui.theme.CalculatorTheme
 import java.util.Locale
@@ -94,18 +97,16 @@ fun CalculatorDisplay(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Result
-            Text(
+            // Result with auto-sizing text
+            AutoSizeText(
                 text = formatDisplayResult(result).forceDotDecimalForDisplay(),
-                style = getResultTextStyle(result),
                 color = if (isError) {
                     MaterialTheme.colorScheme.error
                 } else {
                     colors.displayText
                 },
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                textAlign = TextAlign.End,
+                maxFontSize = 56.sp,
+                minFontSize = 16.sp,
                 modifier = Modifier
                     .fillMaxWidth()
                     .alpha(resultAlpha)
@@ -115,11 +116,44 @@ fun CalculatorDisplay(
     }
 }
 
+/**
+ * Auto-sizing text that scales down to fit the available width
+ */
 @Composable
-private fun getResultTextStyle(result: String) = when {
-    result.length > 12 -> CalculatorTextStyles.resultSmall
-    result.length > 8 -> CalculatorTextStyles.resultMedium
-    else -> CalculatorTextStyles.resultLarge
+fun AutoSizeText(
+    text: String,
+    color: Color,
+    modifier: Modifier = Modifier,
+    maxFontSize: TextUnit = 56.sp,
+    minFontSize: TextUnit = 16.sp,
+    textAlign: TextAlign = TextAlign.End
+) {
+    var fontSize by remember { mutableStateOf(maxFontSize) }
+    var readyToDraw by remember { mutableStateOf(false) }
+
+    // Reset font size when text changes
+    LaunchedEffect(text) {
+        fontSize = maxFontSize
+        readyToDraw = false
+    }
+
+    Text(
+        text = text,
+        style = CalculatorTextStyles.resultLarge.copy(fontSize = fontSize),
+        color = color,
+        maxLines = 1,
+        softWrap = false,
+        textAlign = textAlign,
+        modifier = modifier,
+        onTextLayout = { textLayoutResult ->
+            if (textLayoutResult.hasVisualOverflow && fontSize > minFontSize) {
+                // Reduce font size step by step until it fits
+                fontSize = (fontSize.value - 2f).coerceAtLeast(minFontSize.value).sp
+            } else {
+                readyToDraw = true
+            }
+        }
+    )
 }
 
 private fun formatDisplayResult(result: String): String {

@@ -1,8 +1,11 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Base application theme. -->
-    <style name="Base.Theme.Hesap" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Customize your light theme here. -->
-        <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
+    <!-- Base application theme - Force Light Theme for splash -->
+    <style name="Base.Theme.Hesap" parent="Theme.Material3.Light.NoActionBar">
+        <!-- Light theme colors for splash -->
+        <item name="android:windowBackground">@color/splash_background_light</item>
+        <item name="android:statusBarColor">@color/splash_background_light</item>
+        <item name="android:navigationBarColor">@color/splash_background_light</item>
+        <item name="android:windowLightStatusBar">true</item>
     </style>
 
     <style name="Theme.Hesap" parent="Base.Theme.Hesap" />

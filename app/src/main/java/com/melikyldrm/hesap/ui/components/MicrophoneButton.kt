@@ -159,14 +159,14 @@ fun SmallMicrophoneButton(
     ) {
         Box(
             modifier = Modifier
-                .size(40.dp)
+                .size(48.dp)
                 .clip(CircleShape)
                 .background(backgroundColor),
             contentAlignment = Alignment.Center
         ) {
             if (isProcessing) {
                 CircularProgressIndicator(
-                    modifier = Modifier.size(18.dp),
+                    modifier = Modifier.size(22.dp),
                     color = Color.White,
                     strokeWidth = 2.dp
                 )
@@ -178,7 +178,7 @@ fun SmallMicrophoneButton(
                         Icons.Default.Mic
                     },
                     contentDescription = if (isListening) "Dinlemeyi durdur" else "Sesli komut",
-                    modifier = Modifier.size(20.dp),
+                    modifier = Modifier.size(24.dp),
                     tint = Color.White
                 )
             }

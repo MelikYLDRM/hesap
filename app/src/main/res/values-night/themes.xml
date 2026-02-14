@@ -1,7 +1,12 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Base application theme. -->
-    <style name="Base.Theme.Hesap" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Customize your dark theme here. -->
-        <!-- <item name="colorPrimary">@color/my_dark_primary</item> -->
+    <!-- Base application theme - Force Dark Theme for splash -->
+    <style name="Base.Theme.Hesap" parent="Theme.Material3.Dark.NoActionBar">
+        <!-- Dark theme colors for splash -->
+        <item name="android:windowBackground">@color/splash_background_dark</item>
+        <item name="android:statusBarColor">@color/splash_background_dark</item>
+        <item name="android:navigationBarColor">@color/splash_background_dark</item>
+        <item name="android:windowLightStatusBar">false</item>
     </style>
+
+    <style name="Theme.Hesap" parent="Base.Theme.Hesap" />
 </resources>

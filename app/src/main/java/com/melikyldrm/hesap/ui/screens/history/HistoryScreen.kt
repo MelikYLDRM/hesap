@@ -54,7 +54,8 @@ fun HistoryScreen(
                         IconButton(onClick = { showClearDialog = true }) {
                             Icon(Icons.Default.DeleteSweep, contentDescription = "Temizle")
                         }
-                    }
+                    },
+                    windowInsets = WindowInsets(0.dp)
                 )
             }
         }
@@ -171,7 +172,8 @@ private fun SearchBar(
                     Icon(Icons.Default.Clear, contentDescription = "Temizle")
                 }
             }
-        }
+        },
+        windowInsets = WindowInsets(0.dp)
     )
 }
 
