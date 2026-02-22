@@ -163,6 +163,10 @@ dependencies {
     // Google Mobile Ads (AdMob) - Lazy loading ile yüklenir
     implementation(libs.play.services.ads)
 
+    // In-App Update - Otomatik güncelleme
+    implementation(libs.play.app.update)
+    implementation(libs.play.app.update.ktx)
+
     // Testing
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

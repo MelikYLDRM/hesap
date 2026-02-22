@@ -27,12 +27,29 @@ import kotlinx.coroutines.withContext
  * AdMob Banner Reklam Bileşeni
  *
  * Lazy loading ile yüklenir - uygulama açılış hızını düşürmez.
- * Test modunda çalışır, Play Store'a yüklemeden önce gerçek Ad Unit ID kullanın.
+ * Debug modda test reklamları, Release modda gerçek reklamlar gösterilir.
  */
 object AdConfig {
-    // Test Ad Unit ID - Play Store'a yüklemeden önce gerçek ID ile değiştirin!
-    // Gerçek ID format: ca-app-pub-XXXXXXXXXXXXXXXX/XXXXXXXXXX
-    const val BANNER_AD_UNIT_ID = "ca-app-pub-3940256099942544/6300978111" // Test ID
+    // Test Ad Unit ID (Debug builds için)
+    private const val TEST_BANNER_AD_UNIT_ID = "ca-app-pub-3940256099942544/6300978111"
+
+    // Gerçek Ad Unit ID (Production builds için)
+    // AdMob hesabınızdan oluşturduğunuz Banner Ad Unit ID'yi buraya yazın
+    // Format: ca-app-pub-XXXXXXXXXXXXXXXX/XXXXXXXXXX
+    private const val PRODUCTION_BANNER_AD_UNIT_ID = "ca-app-pub-3940256099942544/6300978111" // TODO: Gerçek ID ile değiştirin
+
+    /**
+     * Build türüne göre uygun Ad Unit ID'yi döndürür
+     * Debug modda test reklamları, Release modda gerçek reklamlar
+     */
+    val BANNER_AD_UNIT_ID: String
+        get() = if (com.melikyldrm.hesap.BuildConfig.DEBUG) {
+            android.util.Log.d("AdMob", "Using TEST Ad Unit ID")
+            TEST_BANNER_AD_UNIT_ID
+        } else {
+            android.util.Log.d("AdMob", "Using PRODUCTION Ad Unit ID")
+            PRODUCTION_BANNER_AD_UNIT_ID
+        }
 
     // AdMob başlatıldı mı?
     private var isInitialized = false

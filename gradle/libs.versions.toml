@@ -56,6 +56,9 @@ profileinstaller = "1.4.1"
 # Google Mobile Ads (AdMob)
 playServicesAds = "24.3.0"
 
+# In-App Update
+playAppUpdate = "2.1.0"
+
 [libraries]
 # Core
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -126,6 +129,10 @@ androidx-profileinstaller = { group = "androidx.profileinstaller", name = "profi
 
 # Google Mobile Ads (AdMob)
 play-services-ads = { group = "com.google.android.gms", name = "play-services-ads", version.ref = "playServicesAds" }
+
+# In-App Update
+play-app-update = { group = "com.google.android.play", name = "app-update", version.ref = "playAppUpdate" }
+play-app-update-ktx = { group = "com.google.android.play", name = "app-update-ktx", version.ref = "playAppUpdate" }
 
 # Testing
 junit = { group = "junit", name = "junit", version.ref = "junit" }
