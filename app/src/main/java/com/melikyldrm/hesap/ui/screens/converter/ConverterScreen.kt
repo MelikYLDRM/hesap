@@ -71,10 +71,10 @@ fun ConverterScreen(
                 }
             }
 
-            // Converter content
+            // Converter content - weight ile kalan alanı kapla
             Column(
                 modifier = Modifier
-                    .fillMaxSize()
+                    .weight(1f)
                     .padding(16.dp)
                     .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(16.dp)

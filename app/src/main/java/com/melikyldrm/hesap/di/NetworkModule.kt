@@ -1,5 +1,6 @@
 package com.melikyldrm.hesap.di
 
+import com.melikyldrm.hesap.BuildConfig
 import com.melikyldrm.hesap.data.remote.api.ExchangeRateApi
 import com.melikyldrm.hesap.data.remote.api.TcmbApi
 import dagger.Module
@@ -23,7 +24,11 @@ object NetworkModule {
     @Singleton
     fun provideLoggingInterceptor(): HttpLoggingInterceptor {
         return HttpLoggingInterceptor().apply {
-            level = HttpLoggingInterceptor.Level.BODY
+            level = if (BuildConfig.DEBUG) {
+                HttpLoggingInterceptor.Level.BASIC
+            } else {
+                HttpLoggingInterceptor.Level.NONE
+            }
         }
     }
 

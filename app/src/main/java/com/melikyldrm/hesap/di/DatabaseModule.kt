@@ -10,6 +10,7 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import java.util.concurrent.Executors
 import javax.inject.Singleton
 
 @Module
@@ -27,6 +28,9 @@ object DatabaseModule {
             "hesap_database"
         )
             .fallbackToDestructiveMigration()
+            // Background thread'de query çalıştır
+            .setQueryExecutor(Executors.newCachedThreadPool())
+            .setTransactionExecutor(Executors.newCachedThreadPool())
             .build()
     }
 

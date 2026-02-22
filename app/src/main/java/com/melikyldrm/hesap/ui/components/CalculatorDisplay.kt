@@ -1,8 +1,5 @@
 package com.melikyldrm.hesap.ui.components
 
-import androidx.compose.animation.animateContentSize
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
@@ -14,7 +11,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -35,24 +31,20 @@ private fun String.forceDotDecimalForDisplay(): String {
 fun CalculatorDisplay(
     expression: String,
     result: String,
+    modifier: Modifier = Modifier,
     previousExpression: String = "",
-    isError: Boolean = false,
-    modifier: Modifier = Modifier
+    isError: Boolean = false
 ) {
+    // Debug log
+    android.util.Log.d("CalcDisplay", "Rendering - expression: $expression, result: $result")
+
     val colors = CalculatorTheme.colors
     val scrollState = rememberScrollState()
 
-    // Auto-scroll to end when expression changes
+    // Auto-scroll to end when expression changes (non-animated for faster startup)
     LaunchedEffect(expression) {
-        scrollState.animateScrollTo(scrollState.maxValue)
+        scrollState.scrollTo(scrollState.maxValue)
     }
-
-    // Animate result alpha for smooth transitions
-    val resultAlpha by animateFloatAsState(
-        targetValue = if (result.isNotEmpty()) 1f else 0f,
-        animationSpec = tween(200),
-        label = "resultAlpha"
-    )
 
     Surface(
         modifier = modifier
@@ -107,10 +99,7 @@ fun CalculatorDisplay(
                 },
                 maxFontSize = 56.sp,
                 minFontSize = 16.sp,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .alpha(resultAlpha)
-                    .animateContentSize()
+                modifier = Modifier.fillMaxWidth()
             )
         }
     }
@@ -125,32 +114,28 @@ fun AutoSizeText(
     color: Color,
     modifier: Modifier = Modifier,
     maxFontSize: TextUnit = 56.sp,
-    minFontSize: TextUnit = 16.sp,
+    minFontSize: TextUnit = 14.sp,
     textAlign: TextAlign = TextAlign.End
 ) {
-    var fontSize by remember { mutableStateOf(maxFontSize) }
-    var readyToDraw by remember { mutableStateOf(false) }
+    var scaledFontSize by remember { mutableStateOf(maxFontSize) }
 
-    // Reset font size when text changes
+    // Text değiştiğinde font boyutunu sıfırla
     LaunchedEffect(text) {
-        fontSize = maxFontSize
-        readyToDraw = false
+        scaledFontSize = maxFontSize
     }
 
     Text(
         text = text,
-        style = CalculatorTextStyles.resultLarge.copy(fontSize = fontSize),
+        style = CalculatorTextStyles.resultLarge.copy(fontSize = scaledFontSize),
         color = color,
         maxLines = 1,
         softWrap = false,
         textAlign = textAlign,
         modifier = modifier,
         onTextLayout = { textLayoutResult ->
-            if (textLayoutResult.hasVisualOverflow && fontSize > minFontSize) {
-                // Reduce font size step by step until it fits
-                fontSize = (fontSize.value - 2f).coerceAtLeast(minFontSize.value).sp
-            } else {
-                readyToDraw = true
+            if (textLayoutResult.hasVisualOverflow && scaledFontSize > minFontSize) {
+                // Font boyutunu küçült ve tekrar dene
+                scaledFontSize = (scaledFontSize.value - 4f).coerceAtLeast(minFontSize.value).sp
             }
         }
     )

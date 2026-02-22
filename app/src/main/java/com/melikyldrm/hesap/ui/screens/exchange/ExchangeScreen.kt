@@ -67,11 +67,16 @@ fun ExchangeScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .verticalScroll(rememberScrollState())
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Last update info
+            // Scrollable content
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .verticalScroll(rememberScrollState())
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                // Last update info
             state.lastUpdateTime?.let { timestamp ->
                 val dateFormat = SimpleDateFormat("dd.MM.yyyy HH:mm", Locale("tr"))
                 Card(
@@ -237,23 +242,24 @@ fun ExchangeScreen(
                 }
             }
 
-            // Popular currencies section
-            if (state.popularRates.isNotEmpty()) {
-                Spacer(modifier = Modifier.height(8.dp))
+                // Popular currencies section
+                if (state.popularRates.isNotEmpty()) {
+                    Spacer(modifier = Modifier.height(8.dp))
 
-                Text(
-                    text = "Güncel Kurlar (TRY)",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold
-                )
-
-                state.popularRates.forEach { rate ->
-                    ExchangeRateCard(
-                        rate = rate,
-                        onClick = {
-                            viewModel.selectCurrencyPair(rate.baseCurrency, rate.targetCurrency)
-                        }
+                    Text(
+                        text = "Güncel Kurlar (TRY)",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold
                     )
+
+                    state.popularRates.forEach { rate ->
+                        ExchangeRateCard(
+                            rate = rate,
+                            onClick = {
+                                viewModel.selectCurrencyPair(rate.baseCurrency, rate.targetCurrency)
+                            }
+                        )
+                    }
                 }
             }
         }

@@ -18,6 +18,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.melikyldrm.hesap.domain.model.*
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -66,7 +67,7 @@ fun FinanceScreen(
             // Content
             Box(
                 modifier = Modifier
-                    .fillMaxSize()
+                    .weight(1f)
                     .padding(16.dp)
             ) {
                 when (state.selectedTab) {
@@ -158,13 +159,13 @@ private fun KdvResultCard(result: KdvResult) {
         ) {
             Text("Sonuç", style = MaterialTheme.typography.titleMedium)
             HorizontalDivider()
-            ResultRow("KDV Hariç Tutar:", String.format("%,.2f ₺", result.baseAmount))
+            ResultRow("KDV Hariç Tutar:", String.format(Locale.getDefault(), "%,.2f ₺", result.baseAmount))
             ResultRow("KDV Oranı:", "%${(result.kdvRate * 100).toInt()}")
-            ResultRow("KDV Tutarı:", String.format("%,.2f ₺", result.kdvAmount))
+            ResultRow("KDV Tutarı:", String.format(Locale.getDefault(), "%,.2f ₺", result.kdvAmount))
             HorizontalDivider()
             ResultRow(
                 "Toplam (KDV Dahil):",
-                String.format("%,.2f ₺", result.totalAmount),
+                String.format(Locale.getDefault(), "%,.2f ₺", result.totalAmount),
                 highlight = true
             )
         }
@@ -249,14 +250,14 @@ private fun TevkifatResultCard(result: TevkifatResult) {
         ) {
             Text("Sonuç", style = MaterialTheme.typography.titleMedium)
             HorizontalDivider()
-            ResultRow("Matrah:", String.format("%,.2f ₺", result.baseAmount))
-            ResultRow("Hesaplanan KDV:", String.format("%,.2f ₺", result.kdvAmount))
+            ResultRow("Matrah:", String.format(Locale.getDefault(), "%,.2f ₺", result.baseAmount))
+            ResultRow("Hesaplanan KDV:", String.format(Locale.getDefault(), "%,.2f ₺", result.kdvAmount))
             ResultRow("Tevkifat Oranı:", result.tevkifatRate)
             HorizontalDivider()
-            ResultRow("Tevkifat Tutarı (Alıcı Öder):", String.format("%,.2f ₺", result.tevkifatAmount))
-            ResultRow("Satıcının Tahsil Edeceği KDV:", String.format("%,.2f ₺", result.sellerKdv))
+            ResultRow("Tevkifat Tutarı (Alıcı Öder):", String.format(Locale.getDefault(), "%,.2f ₺", result.tevkifatAmount))
+            ResultRow("Satıcının Tahsil Edeceği KDV:", String.format(Locale.getDefault(), "%,.2f ₺", result.sellerKdv))
             HorizontalDivider()
-            ResultRow("Toplam Tutar:", String.format("%,.2f ₺", result.totalAmount), highlight = true)
+            ResultRow("Toplam Tutar:", String.format(Locale.getDefault(), "%,.2f ₺", result.totalAmount), highlight = true)
         }
     }
 }
@@ -357,13 +358,13 @@ private fun FaizResultCard(result: FaizResult) {
         ) {
             Text("Sonuç", style = MaterialTheme.typography.titleMedium)
             HorizontalDivider()
-            ResultRow("Ana Para:", String.format("%,.2f ₺", result.principal))
+            ResultRow("Ana Para:", String.format(Locale.getDefault(), "%,.2f ₺", result.principal))
             ResultRow("Faiz Oranı:", "%${result.rate}")
             ResultRow("Süre:", "${result.time} Yıl")
             ResultRow("Faiz Türü:", if (result.isCompound) "Bileşik" else "Basit")
             HorizontalDivider()
-            ResultRow("Faiz Tutarı:", String.format("%,.2f ₺", result.interest))
-            ResultRow("Toplam Tutar:", String.format("%,.2f ₺", result.totalAmount), highlight = true)
+            ResultRow("Faiz Tutarı:", String.format(Locale.getDefault(), "%,.2f ₺", result.interest))
+            ResultRow("Toplam Tutar:", String.format(Locale.getDefault(), "%,.2f ₺", result.totalAmount), highlight = true)
         }
     }
 }
@@ -439,16 +440,16 @@ private fun KarZararResultCard(result: KarZararResult) {
                 }
             )
             HorizontalDivider()
-            ResultRow("Maliyet:", String.format("%,.2f ₺", result.costPrice))
-            ResultRow("Satış:", String.format("%,.2f ₺", result.sellingPrice))
+            ResultRow("Maliyet:", String.format(Locale.getDefault(), "%,.2f ₺", result.costPrice))
+            ResultRow("Satış:", String.format(Locale.getDefault(), "%,.2f ₺", result.sellingPrice))
             HorizontalDivider()
             ResultRow(
                 if (isProfit) "Kâr Tutarı:" else "Zarar Tutarı:",
-                String.format("%,.2f ₺", kotlin.math.abs(result.profitOrLoss))
+                String.format(Locale.getDefault(), "%,.2f ₺", kotlin.math.abs(result.profitOrLoss))
             )
             ResultRow(
                 if (isProfit) "Kâr Oranı:" else "Zarar Oranı:",
-                String.format("%.2f%%", kotlin.math.abs(result.percentage)),
+                String.format(Locale.getDefault(), "%.2f%%", kotlin.math.abs(result.percentage)),
                 highlight = true
             )
         }

@@ -1,7 +1,6 @@
 package com.melikyldrm.hesap.ui.navigation
 
 import androidx.compose.animation.*
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -29,12 +28,11 @@ fun CalculatorNavHost(
         navController = navController,
         startDestination = Screen.Basic.route,
         modifier = modifier,
-        enterTransition = {
-            fadeIn(animationSpec = tween(300))
-        },
-        exitTransition = {
-            fadeOut(animationSpec = tween(300))
-        }
+        // Animasyonları kaldırarak startup'ı hızlandır
+        enterTransition = { EnterTransition.None },
+        exitTransition = { ExitTransition.None },
+        popEnterTransition = { EnterTransition.None },
+        popExitTransition = { ExitTransition.None }
     ) {
         composable(Screen.Basic.route) {
             BasicCalculatorScreen(
@@ -97,6 +95,15 @@ fun BottomNavigationBar(
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
+    // Colors'ı remember ile cache'le
+    val colors = NavigationBarItemDefaults.colors(
+        selectedIconColor = MaterialTheme.colorScheme.primary,
+        selectedTextColor = MaterialTheme.colorScheme.primary,
+        indicatorColor = MaterialTheme.colorScheme.primaryContainer,
+        unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+        unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
+    )
+
     NavigationBar(
         modifier = modifier,
         containerColor = MaterialTheme.colorScheme.surface,
@@ -125,13 +132,7 @@ fun BottomNavigationBar(
                         }
                     }
                 },
-                colors = NavigationBarItemDefaults.colors(
-                    selectedIconColor = MaterialTheme.colorScheme.primary,
-                    selectedTextColor = MaterialTheme.colorScheme.primary,
-                    indicatorColor = MaterialTheme.colorScheme.primaryContainer,
-                    unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                    unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                colors = colors
             )
         }
     }

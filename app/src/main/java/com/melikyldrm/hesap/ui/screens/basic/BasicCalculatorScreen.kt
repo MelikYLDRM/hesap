@@ -31,14 +31,22 @@ fun BasicCalculatorScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val speechState by viewModel.speechState.collectAsStateWithLifecycle()
 
+    // Debug: State değişikliklerini logla
+    LaunchedEffect(state.result) {
+        android.util.Log.d("BasicCalcScreen", "State result changed to: ${state.result}, expression: ${state.expression}")
+    }
+
     val context = LocalContext.current
-    var hasAudioPermission by remember {
-        mutableStateOf(
-            ContextCompat.checkSelfPermission(
-                context,
-                Manifest.permission.RECORD_AUDIO
-            ) == PackageManager.PERMISSION_GRANTED
-        )
+
+    // Permission check'i lazy olarak yap - sadece kullanıldığında kontrol et
+    var hasAudioPermission by remember { mutableStateOf(false) }
+
+    // İlk composition'dan sonra permission kontrolü yap
+    LaunchedEffect(Unit) {
+        hasAudioPermission = ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.RECORD_AUDIO
+        ) == PackageManager.PERMISSION_GRANTED
     }
 
     val permissionLauncher = rememberLauncherForActivityResult(
@@ -90,17 +98,21 @@ fun BasicCalculatorScreen(
             )
         }
     ) { paddingValues ->
+        // Speech success durumunda otomatik olarak 2 saniye sonra feedback'i kapat
+        LaunchedEffect(speechState) {
+            if (speechState is SpeechState.Success) {
+                kotlinx.coroutines.delay(2000)
+                viewModel.resetSpeechState()
+            }
+        }
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            // Speech feedback
-            AnimatedVisibility(
-                visible = speechState !is SpeechState.Idle,
-                enter = slideInVertically() + fadeIn(),
-                exit = slideOutVertically() + fadeOut()
-            ) {
+            // Speech feedback - basit if ile göster (animasyon yok)
+            if (speechState !is SpeechState.Idle) {
                 SpeechFeedbackCard(
                     speechState = speechState,
                     modifier = Modifier.padding(vertical = 8.dp),
@@ -108,14 +120,16 @@ fun BasicCalculatorScreen(
                 )
             }
 
-            // Display
-            CalculatorDisplay(
-                expression = state.expression,
-                result = state.result,
-                previousExpression = state.previousExpression,
-                isError = state.isError,
-                modifier = Modifier.weight(0.35f)
-            )
+            // Display - key ile zorla güncelleme
+            key(state.result, state.expression) {
+                CalculatorDisplay(
+                    expression = state.expression,
+                    result = state.result,
+                    previousExpression = state.previousExpression,
+                    isError = state.isError,
+                    modifier = Modifier.weight(0.35f)
+                )
+            }
 
             // Button pad
             BasicButtonPad(

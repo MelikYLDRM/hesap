@@ -13,3 +13,9 @@
 .externalNativeBuild
 .cxx
 local.properties
+
+# Keystore - Keep secret!
+/keystore/
+*.jks
+*.keystore
+

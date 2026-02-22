@@ -1,5 +1,15 @@
 # Hesap - Türkçe Sesli Hesap Makinası 🧮🎤
 
+<p align="center">
+  <img src="hesap.png" alt="Hesap Logo" width="120" height="120">
+</p>
+
+<p align="center">
+  <a href="https://play.google.com/store/apps/details?id=com.melikyldrm.hesap">
+    <img src="https://img.shields.io/badge/Google%20Play-Download-green?style=for-the-badge&logo=google-play" alt="Google Play">
+  </a>
+</p>
+
 Modern ve kullanıcı dostu bir Android hesap makinası uygulaması. Türkçe sesli komut desteği ile hesap yapmanın en kolay yolu!
 
 ## 📱 Özellikler
@@ -35,7 +45,7 @@ Modern ve kullanıcı dostu bir Android hesap makinası uygulaması. Türkçe se
 
 ## 📋 Gereksinimler
 
-- Android 7.0 (API 24) veya üzeri
+- Android 8.0 (API 26) veya üzeri
 - Mikrofon izni (sesli komutlar için)
 - İnternet izni (döviz kurları için)
 
@@ -66,15 +76,31 @@ app/
 └── src/test/           # Unit testler
 ```
 
+## 🔐 Gizlilik Politikası
+
+Bu uygulama:
+- **Mikrofon**: Yalnızca sesli komutlar için kullanılır. Ses verileri cihazda işlenir ve sunucuya gönderilmez.
+- **İnternet**: Yalnızca döviz kurlarını güncellemek için kullanılır.
+- **Kişisel Veri**: Hiçbir kişisel veri toplanmaz veya paylaşılmaz.
+
+Detaylı gizlilik politikası için: [Gizlilik Politikası](PRIVACY_POLICY.md)
+
 ## 🧪 Testler
 
 ```bash
 ./gradlew testDebugUnitTest
 ```
 
+## 📦 Release Build
+
+Play Store için AAB oluşturmak:
+```bash
+./gradlew bundleRelease
+```
+
 ## 📄 Lisans
 
-Bu proje MIT lisansı altında lisanslanmıştır.
+Bu proje MIT lisansı altında lisanslanmıştır. Detaylar için [LICENSE](LICENSE) dosyasına bakın.
 
 ## 👤 Geliştirici
 

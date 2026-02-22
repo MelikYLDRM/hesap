@@ -1,5 +1,6 @@
 <resources>
     <string name="app_name">Hesap</string>
+    <string name="app_description">Hesap, günlük hesaplamalarınız için tasarlanmış kapsamlı bir hesap makinesi uygulamasıdır. Temel hesaplamalardan bilimsel işlemlere, döviz çeviriminden finansal hesaplamalara kadar tüm ihtiyaçlarınızı karşılar.</string>
 
     <!-- Widget Descriptions -->
     <string name="calculator_widget_description">Hızlı hesap makinesi widget\'ı. Ana ekrandan doğrudan hesaplama yapın.</string>
@@ -8,4 +9,18 @@
     <!-- Widget Labels -->
     <string name="widget_calculator_name">Hesap Makinesi</string>
     <string name="widget_quick_access_name">Hızlı Hesapla</string>
+
+    <!-- Accessibility -->
+    <string name="cd_microphone">Sesli giriş</string>
+    <string name="cd_clear">Temizle</string>
+    <string name="cd_delete">Sil</string>
+    <string name="cd_equals">Eşittir</string>
+    <string name="cd_history">Geçmiş</string>
+    <string name="cd_settings">Ayarlar</string>
+
+    <!-- Error Messages -->
+    <string name="error_calculation">Hesaplama hatası</string>
+    <string name="error_invalid_input">Geçersiz giriş</string>
+    <string name="error_network">İnternet bağlantısı yok</string>
+    <string name="error_exchange_rate">Döviz kurları yüklenemedi</string>
 </resources>

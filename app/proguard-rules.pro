@@ -69,8 +69,33 @@
 # ==================== Compose ====================
 -dontwarn androidx.compose.**
 
+# Keep Compose stability
+-keep class androidx.compose.runtime.** { *; }
+-keepclassmembers class * {
+    @androidx.compose.runtime.Composable <methods>;
+}
+
+# ==================== Glance Widget ====================
+-keep class androidx.glance.** { *; }
+-keep class com.melikyldrm.hesap.widget.** { *; }
+
+# ==================== exp4j Expression Parser ====================
+-keep class net.objecthunter.exp4j.** { *; }
+
+# ==================== Startup Optimization ====================
+# Aggressive optimization for faster startup
+-optimizationpasses 5
+-allowaccessmodification
+-dontpreverify
+
 # ==================== Keep enums ====================
 -keepclassmembers enum * {
     public static **[] values();
     public static ** valueOf(java.lang.String);
 }
+
+# ==================== Google Mobile Ads (AdMob) ====================
+-keep class com.google.android.gms.ads.** { *; }
+-keep class com.google.ads.** { *; }
+-dontwarn com.google.android.gms.ads.**
+

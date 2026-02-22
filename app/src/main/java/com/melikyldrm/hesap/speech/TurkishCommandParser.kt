@@ -99,8 +99,16 @@ class TurkishCommandParser @Inject constructor(
         // Geçerli bir matematiksel ifade mi kontrol et (en az bir operatör içermeli)
         val hasOperator = expression.contains(Regex("[+\\-*/^]"))
 
+        // İfade operatörle başlıyorsa devam işlemi (önceki sonuç üzerine)
+        val startsWithOperator = expression.isNotEmpty() && expression.first() in "+-*/"
+
         return if (expression.isNotEmpty() && hasOperator) {
-            SpeechCommand.Calculate(expression)
+            if (startsWithOperator) {
+                // "+70", "-50", "*2" gibi ifadeler - önceki sonuç üzerine devam
+                SpeechCommand.ContinueCalculation(expression)
+            } else {
+                SpeechCommand.Calculate(expression)
+            }
         } else {
             SpeechCommand.Unknown(spokenText)
         }

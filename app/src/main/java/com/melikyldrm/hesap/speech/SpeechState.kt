@@ -12,6 +12,8 @@ sealed class SpeechState {
 
 sealed class SpeechCommand {
     data class Calculate(val expression: String) : SpeechCommand()
+    /** Devam işlemi - önceki sonuç üzerine işlem yapar (örn: "+70" -> sonuç + 70) */
+    data class ContinueCalculation(val operatorAndValue: String) : SpeechCommand()
     data class KdvCalculate(val amount: Double, val rate: Int, val isIncluded: Boolean) : SpeechCommand()
     data class TevkifatCalculate(val amount: Double, val kdvRate: Int, val tevkifatRate: String) : SpeechCommand()
     data class Convert(val value: Double, val fromUnit: String, val toUnit: String) : SpeechCommand()

@@ -222,5 +222,69 @@ class E2ESpeechCalculatorTest {
         println("Formatted big number: $formatted")
         assertTrue(formatted.contains("E") || formatted == "100000000000")
     }
-}
 
+    // ==================== DEVAM İŞLEMİ TESTLERİ ====================
+
+    @Test
+    fun `continue calculation - arti ile baslayan ifade`() {
+        val command = commandParser.parseCommand("artı yetmiş")
+        assertTrue("ContinueCalculation bekleniyordu ama $command geldi",
+            command is SpeechCommand.ContinueCalculation)
+        assertEquals("+70", (command as SpeechCommand.ContinueCalculation).operatorAndValue)
+    }
+
+    @Test
+    fun `continue calculation - eksi ile baslayan ifade`() {
+        val command = commandParser.parseCommand("eksi yirmi")
+        assertTrue("ContinueCalculation bekleniyordu ama $command geldi",
+            command is SpeechCommand.ContinueCalculation)
+        assertEquals("-20", (command as SpeechCommand.ContinueCalculation).operatorAndValue)
+    }
+
+    @Test
+    fun `continue calculation - carpi ile baslayan ifade`() {
+        val command = commandParser.parseCommand("çarpı iki")
+        assertTrue("ContinueCalculation bekleniyordu ama $command geldi",
+            command is SpeechCommand.ContinueCalculation)
+        assertEquals("*2", (command as SpeechCommand.ContinueCalculation).operatorAndValue)
+    }
+
+    @Test
+    fun `continue calculation - bolu ile baslayan ifade`() {
+        val command = commandParser.parseCommand("bölü beş")
+        assertTrue("ContinueCalculation bekleniyordu ama $command geldi",
+            command is SpeechCommand.ContinueCalculation)
+        assertEquals("/5", (command as SpeechCommand.ContinueCalculation).operatorAndValue)
+    }
+
+    @Test
+    fun `continue calculation - mevcut sonuc uzerine hesaplama`() {
+        // Simülasyon: 50 sonucuna +70 ekleme
+        val currentResult = "50"
+        val command = commandParser.parseCommand("artı yetmiş")
+        assertTrue(command is SpeechCommand.ContinueCalculation)
+
+        val fullExpression = currentResult + (command as SpeechCommand.ContinueCalculation).operatorAndValue
+        val result = calculatorEngine.evaluate(fullExpression).getOrNull()
+        assertEquals(120.0, result!!, 0.0001)
+    }
+
+    @Test
+    fun `continue calculation - rakamla arti 120`() {
+        // "artı 120" veya "artı yüz yirmi" ifadesi
+        val command = commandParser.parseCommand("artı 120")
+        println("Command for 'artı 120': $command")
+        assertTrue("ContinueCalculation bekleniyordu ama $command geldi",
+            command is SpeechCommand.ContinueCalculation)
+        assertEquals("+120", (command as SpeechCommand.ContinueCalculation).operatorAndValue)
+    }
+
+    @Test
+    fun `continue calculation - arti yuz yirmi`() {
+        val command = commandParser.parseCommand("artı yüz yirmi")
+        println("Command for 'artı yüz yirmi': $command")
+        assertTrue("ContinueCalculation bekleniyordu ama $command geldi",
+            command is SpeechCommand.ContinueCalculation)
+        assertEquals("+120", (command as SpeechCommand.ContinueCalculation).operatorAndValue)
+    }
+}

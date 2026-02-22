@@ -8,8 +8,11 @@ import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
 import android.util.Log
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -26,8 +29,9 @@ class SpeechRecognitionManager @Inject constructor(
     private val _speechState = MutableStateFlow<SpeechState>(SpeechState.Idle)
     val speechState: StateFlow<SpeechState> = _speechState.asStateFlow()
 
-    private val _lastCommand = MutableStateFlow<SpeechCommand?>(null)
-    val lastCommand: StateFlow<SpeechCommand?> = _lastCommand.asStateFlow()
+    // SharedFlow kullanıyoruz - aynı komutu birden fazla kez emit edebilir
+    private val _lastCommand = MutableSharedFlow<SpeechCommand>(replay = 0, extraBufferCapacity = 1)
+    val lastCommand: SharedFlow<SpeechCommand> = _lastCommand.asSharedFlow()
 
     private val recognizerIntent: Intent by lazy {
         Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
@@ -102,7 +106,7 @@ class SpeechRecognitionManager @Inject constructor(
      */
     fun resetState() {
         _speechState.value = SpeechState.Idle
-        _lastCommand.value = null
+        // SharedFlow için reset gerekmez - sadece yeni komutlar emit edilir
     }
 
     private fun createRecognitionListener(): RecognitionListener {
@@ -192,12 +196,18 @@ class SpeechRecognitionManager @Inject constructor(
         val command = commandParser.parseCommand(text)
         Log.d(TAG, "parseCommand result: $command")
 
-        _lastCommand.value = command
+        // SharedFlow ile komutu emit et
+        val emitted = _lastCommand.tryEmit(command)
+        Log.d(TAG, "Command emitted: $emitted")
 
         val parsedExpression = when (command) {
             is SpeechCommand.Calculate -> {
                 Log.d(TAG, "Calculate command with expression: '${command.expression}'")
                 command.expression
+            }
+            is SpeechCommand.ContinueCalculation -> {
+                Log.d(TAG, "ContinueCalculation command with operatorAndValue: '${command.operatorAndValue}'")
+                command.operatorAndValue
             }
             is SpeechCommand.Clear -> null
             is SpeechCommand.Delete -> null
