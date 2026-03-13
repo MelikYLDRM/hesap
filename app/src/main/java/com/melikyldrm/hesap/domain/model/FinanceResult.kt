@@ -60,6 +60,7 @@ enum class KdvRate(val rate: Double, val displayName: String) {
 
 // Tevkifat Rates
 enum class TevkifatRate(val numerator: Int, val denominator: Int, val displayName: String) {
+    RATE_1_10(1, 10, "1/10"),
     RATE_2_10(2, 10, "2/10"),
     RATE_4_10(4, 10, "4/10"),
     RATE_5_10(5, 10, "5/10"),

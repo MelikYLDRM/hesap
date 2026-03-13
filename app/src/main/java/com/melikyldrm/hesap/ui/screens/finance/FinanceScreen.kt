@@ -194,7 +194,7 @@ private fun TevkifatContent(state: FinanceUiState, viewModel: FinanceViewModel) 
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            listOf(KdvRate.RATE_8, KdvRate.RATE_18, KdvRate.RATE_20).forEach { rate ->
+            listOf(KdvRate.RATE_8, KdvRate.RATE_10, KdvRate.RATE_18, KdvRate.RATE_20).forEach { rate ->
                 FilterChip(
                     selected = state.tevkifatKdvRate == rate,
                     onClick = { viewModel.updateTevkifatKdvRate(rate) },
