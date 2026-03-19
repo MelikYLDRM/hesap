@@ -127,7 +127,7 @@ fun SmallMicrophoneButton(
     modifier: Modifier = Modifier
 ) {
     val haptic = LocalHapticFeedback.current
-    val isListening = speechState is SpeechState.Listening
+    val isListening = speechState is SpeechState.Listening || speechState is SpeechState.PartialResult
     val isProcessing = speechState is SpeechState.Processing
 
     val backgroundColor = when {
@@ -196,6 +196,14 @@ fun SpeechFeedbackCard(
         is SpeechState.Listening -> {
             SpeechStatusCard(
                 message = "Dinleniyor...",
+                isError = false,
+                modifier = modifier
+            )
+        }
+        is SpeechState.PartialResult -> {
+            // Kullanıcı hâlâ konuşuyor - kısmi metni göster, işlem yapma
+            SpeechStatusCard(
+                message = "\"${speechState.partialText}\"",
                 isError = false,
                 modifier = modifier
             )

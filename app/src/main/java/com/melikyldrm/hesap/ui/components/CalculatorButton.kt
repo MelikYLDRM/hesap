@@ -67,9 +67,9 @@ fun CalculatorButton(
     Surface(
         modifier = modifier
             .fillMaxSize()
-            .padding(1.dp)
+            .padding(2.dp) // Biraz boşluk bırakalım ki yuvarlaklar birbirine yapışmasın
             .scale(scale)
-            .clip(RoundedCornerShape(12.dp))
+            .clip(RoundedCornerShape(percent = 50)) // Tam yuvarlak / Hap şekli (Xiaomi tarzı)
             .clickable(
                 interactionSource = interactionSource,
                 indication = ripple(),
@@ -79,10 +79,10 @@ fun CalculatorButton(
                     onClick()
                 }
             ),
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(percent = 50), // Tam yuvarlak / Hap şekli
         color = backgroundColor,
-        shadowElevation = if (isPressed) 1.dp else 3.dp,
-        border = BorderStroke(1.dp, borderColor)
+        shadowElevation = if (isPressed) 1.dp else 4.dp, // Biraz daha belirgin gölge
+        border = BorderStroke(0.dp, Color.Transparent) // Border kaldır, solid renk daha şık durur
     ) {
         Box(
             contentAlignment = Alignment.Center,
@@ -91,80 +91,12 @@ fun CalculatorButton(
             Text(
                 text = text,
                 style = TextStyle(
-                    fontSize = if (text.length > 3) 12.sp else if (text.length > 2) 14.sp else 18.sp,
-                    fontWeight = FontWeight.Bold,
+                    fontSize = if (text.length > 3) 14.sp else if (text.length > 2) 16.sp else 24.sp, // Fontları biraz büyüt
+                    fontWeight = FontWeight.Medium, // Bold yerine Medium daha modern (Xiaomi tarzı)
                     textAlign = TextAlign.Center
                 ),
                 color = textColor,
                 maxLines = 1
-            )
-        }
-    }
-}
-
-@Composable
-fun WideCalculatorButton(
-    text: String,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    buttonType: ButtonType = ButtonType.NUMBER,
-    enabled: Boolean = true
-) {
-    val haptic = LocalHapticFeedback.current
-    val interactionSource = remember { MutableInteractionSource() }
-    val isPressed by interactionSource.collectIsPressedAsState()
-
-    val colors = CalculatorTheme.colors
-
-    val (backgroundColor, textColor, borderColor) = when (buttonType) {
-        ButtonType.NUMBER -> Triple(colors.numberButton, colors.numberButtonText, colors.numberButtonText.copy(alpha = 0.25f))
-        ButtonType.OPERATOR -> Triple(colors.operatorButton, colors.operatorButtonText, colors.operatorButtonText.copy(alpha = 0.4f))
-        ButtonType.FUNCTION -> Triple(colors.functionButton, colors.functionButtonText, colors.functionButtonText.copy(alpha = 0.3f))
-        ButtonType.EQUALS -> Triple(colors.equalsButton, colors.equalsButtonText, colors.equalsButtonText.copy(alpha = 0.3f))
-        ButtonType.CLEAR -> Triple(colors.clearButton, colors.clearButtonText, colors.clearButtonText.copy(alpha = 0.3f))
-    }
-
-    val scale by animateFloatAsState(
-        targetValue = if (isPressed) 0.97f else 1f,
-        animationSpec = spring(
-            dampingRatio = Spring.DampingRatioMediumBouncy,
-            stiffness = Spring.StiffnessLow
-        ),
-        label = "buttonScale"
-    )
-
-    Surface(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(1.dp)
-            .scale(scale)
-            .clip(RoundedCornerShape(12.dp))
-            .clickable(
-                interactionSource = interactionSource,
-                indication = ripple(),
-                enabled = enabled,
-                onClick = {
-                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                    onClick()
-                }
-            ),
-        shape = RoundedCornerShape(12.dp),
-        color = backgroundColor,
-        shadowElevation = if (isPressed) 1.dp else 3.dp,
-        border = BorderStroke(1.dp, borderColor)
-    ) {
-        Box(
-            contentAlignment = Alignment.Center,
-            modifier = Modifier.fillMaxSize()
-        ) {
-            Text(
-                text = text,
-                style = TextStyle(
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Center
-                ),
-                color = textColor
             )
         }
     }
@@ -185,12 +117,12 @@ fun IconCalculatorButton(
 
     val colors = CalculatorTheme.colors
 
-    val (backgroundColor, borderColor) = when (buttonType) {
-        ButtonType.NUMBER -> colors.numberButton to colors.numberButtonText.copy(alpha = 0.25f)
-        ButtonType.OPERATOR -> colors.operatorButton to colors.operatorButtonText.copy(alpha = 0.4f)
-        ButtonType.FUNCTION -> colors.functionButton to colors.functionButtonText.copy(alpha = 0.3f)
-        ButtonType.EQUALS -> colors.equalsButton to colors.equalsButtonText.copy(alpha = 0.3f)
-        ButtonType.CLEAR -> colors.clearButton to colors.clearButtonText.copy(alpha = 0.3f)
+    val (backgroundColor, contentColor, borderColor) = when (buttonType) {
+        ButtonType.NUMBER -> Triple(colors.numberButton, colors.numberButtonText, colors.numberButtonText.copy(alpha = 0.25f))
+        ButtonType.OPERATOR -> Triple(colors.operatorButton, colors.operatorButtonText, colors.operatorButtonText.copy(alpha = 0.4f))
+        ButtonType.FUNCTION -> Triple(colors.functionButton, colors.functionButtonText, colors.functionButtonText.copy(alpha = 0.3f))
+        ButtonType.EQUALS -> Triple(colors.equalsButton, colors.equalsButtonText, colors.equalsButtonText.copy(alpha = 0.3f))
+        ButtonType.CLEAR -> Triple(colors.clearButton, colors.clearButtonText, colors.clearButtonText.copy(alpha = 0.3f))
     }
 
     val scale by animateFloatAsState(
@@ -205,9 +137,9 @@ fun IconCalculatorButton(
     Surface(
         modifier = modifier
             .fillMaxSize()
-            .padding(1.dp)
+            .padding(2.dp)
             .scale(scale)
-            .clip(RoundedCornerShape(12.dp))
+            .clip(RoundedCornerShape(percent = 50))
             .clickable(
                 interactionSource = interactionSource,
                 indication = ripple(),
@@ -217,15 +149,18 @@ fun IconCalculatorButton(
                     onClick()
                 }
             ),
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(percent = 50),
         color = backgroundColor,
-        shadowElevation = if (isPressed) 1.dp else 3.dp,
-        border = BorderStroke(1.dp, borderColor)
+        contentColor = contentColor, // İkon rengini otomatik ayarla
+        shadowElevation = if (isPressed) 1.dp else 4.dp,
+        border = BorderStroke(0.dp, Color.Transparent)
     ) {
         Box(
             contentAlignment = Alignment.Center,
             modifier = Modifier.fillMaxSize()
         ) {
+            // contentColor burada otomatik olarak LocalContentColor.current üzerinden icon'a aktarılacak
+            // (Eğer icon tint belirtmemişse)
             icon()
         }
     }

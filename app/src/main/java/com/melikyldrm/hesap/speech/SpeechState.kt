@@ -4,6 +4,8 @@ sealed class SpeechState {
     data object Idle : SpeechState()
     data object Listening : SpeechState()
     data object Processing : SpeechState()
+    /** Kullanıcı henüz konuşuyor - kısmi sonuç, henüz işlem yapılmamalı */
+    data class PartialResult(val partialText: String) : SpeechState()
     data class Success(val text: String, val parsedExpression: String?) : SpeechState()
     data class Error(val message: String) : SpeechState()
     data object PermissionRequired : SpeechState()

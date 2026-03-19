@@ -1,5 +1,6 @@
 package com.melikyldrm.hesap
 
+import android.content.res.Configuration
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -12,6 +13,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.navigation.compose.rememberNavController
 import com.melikyldrm.hesap.data.local.ThemeMode
@@ -139,6 +141,8 @@ fun MainScreen(
     updateState: UpdateState = UpdateState.Idle
 ) {
     val navController = rememberNavController()
+    val configuration = LocalConfiguration.current
+    val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
 
     val onHistoryClick = remember(navController) {
         { navController.navigate(Screen.History.route) }
@@ -166,7 +170,10 @@ fun MainScreen(
         bottomBar = {
             Column {
                 BottomNavigationBar(navController = navController)
-                AdBanner()
+                // Yatay modda reklam gizlenir - yer kalmaz
+                if (!isLandscape) {
+                    AdBanner()
+                }
             }
         }
     ) { innerPadding ->

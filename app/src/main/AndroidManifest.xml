@@ -18,10 +18,10 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Hesap">
 
-        <!-- AdMob App ID - Bu ID'yi kendi AdMob hesabınızdaki ID ile değiştirin -->
+        <!-- AdMob App ID -->
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
-            android:value="ca-app-pub-3940256099942544~3347511713"/>
+            android:value="ca-app-pub-6757073244337160~3876824614"/>
 
         <!-- AdMob - İlk açılışta başlatma devre dışı (lazy loading) -->
         <meta-data

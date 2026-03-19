@@ -7,12 +7,11 @@
         <item name="postSplashScreenTheme">@style/Theme.Hesap</item>
     </style>
 
-    <!-- Base application theme -->
+    <!-- Base application theme - Edge-to-Edge uyumlu -->
     <style name="Base.Theme.Hesap" parent="Theme.Material3.Light.NoActionBar">
         <item name="android:windowBackground">@color/splash_background_light</item>
-        <item name="android:statusBarColor">@color/splash_background_light</item>
-        <item name="android:navigationBarColor">@color/splash_background_light</item>
         <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowLightNavigationBar" tools:targetApi="o_mr1">true</item>
     </style>
 
     <style name="Theme.Hesap" parent="Base.Theme.Hesap" />

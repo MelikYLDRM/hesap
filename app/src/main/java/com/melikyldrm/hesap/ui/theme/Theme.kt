@@ -11,7 +11,6 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
@@ -131,14 +130,14 @@ fun HesapTheme(
     val calculatorColors = if (darkTheme) DarkCalculatorColors else LightCalculatorColors
 
     val view = LocalView.current
-    val statusBarColor = colorScheme.background.toArgb()
 
     if (!view.isInEditMode) {
-        // LaunchedEffect sadece darkTheme değiştiğinde çalışır
+        // Modern edge-to-edge yaklaşımı - deprecated API'ler kullanılmıyor
         androidx.compose.runtime.LaunchedEffect(darkTheme) {
             val window = (view.context as Activity).window
-            window.statusBarColor = statusBarColor
+            // Status bar içeriğinin rengini ayarla (ikon ve yazılar)
             WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !darkTheme
+            WindowCompat.getInsetsController(window, view).isAppearanceLightNavigationBars = !darkTheme
         }
     }
 

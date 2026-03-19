@@ -48,17 +48,21 @@ val EqualsButtonTextLight = Color(0xFFFFFFFF)
 val ClearButtonLight = Color(0xFFFFEBEE)
 val ClearButtonTextLight = Color(0xFFD32F2F)
 
-// Calculator Button Colors - Dark - Modern & Distinct
-val NumberButtonDark = Color(0xFF3D3D4D)
-val NumberButtonTextDark = Color(0xFFFFFFFF)
-val OperatorButtonDark = Color(0xFF4A5FAF)
-val OperatorButtonTextDark = Color(0xFFFFFFFF)
-val FunctionButtonDark = Color(0xFF2D6B5F)
-val FunctionButtonTextDark = Color(0xFFB2DFDB)
-val EqualsButtonDark = Color(0xFFFF6F00)
-val EqualsButtonTextDark = Color(0xFFFFFFFF)
-val ClearButtonDark = Color(0xFF8B2D2D)
-val ClearButtonTextDark = Color(0xFFFFFFFF)
+// Calculator Button Colors - Dark - Modern & Distinct (Pastel Xiaomi Style)
+val NumberButtonDark = Color(0xFF2D2D2D) // Koyu gri (Xiaomi tarzı sayı tuşları)
+val NumberButtonTextDark = Color(0xFFFFFFFF) 
+
+val OperatorButtonDark = Color(0xFFFFCC80) // Pastel Turuncu
+val OperatorButtonTextDark = Color(0xFF3E2723) 
+
+val FunctionButtonDark = Color(0xFFCFD8DC) // Pastel Gri-Mavi (Üst fonksiyon tuşları)
+val FunctionButtonTextDark = Color(0xFF263238)
+
+val EqualsButtonDark = Color(0xFFFFB74D) // Biraz daha belirgin Pastel Turuncu
+val EqualsButtonTextDark = Color(0xFF3E2723)
+
+val ClearButtonDark = Color(0xFFFFAB91) // Pastel Kırmızımsı (C/AC için)
+val ClearButtonTextDark = Color(0xFFBF360C)
 
 // Display Colors
 val DisplayBackgroundLight = Color(0xFFE8EAF6)
@@ -79,4 +83,3 @@ val Info = Color(0xFF2196F3)
 val MicActiveColor = Color(0xFFD32F2F)
 val MicInactiveColor = Color(0xFF1565C0)
 val MicListeningPulse = Color(0xFFEF5350)
-

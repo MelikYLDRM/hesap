@@ -34,9 +34,7 @@ object AdConfig {
     private const val TEST_BANNER_AD_UNIT_ID = "ca-app-pub-3940256099942544/6300978111"
 
     // Gerçek Ad Unit ID (Production builds için)
-    // AdMob hesabınızdan oluşturduğunuz Banner Ad Unit ID'yi buraya yazın
-    // Format: ca-app-pub-XXXXXXXXXXXXXXXX/XXXXXXXXXX
-    private const val PRODUCTION_BANNER_AD_UNIT_ID = "ca-app-pub-3940256099942544/6300978111" // TODO: Gerçek ID ile değiştirin
+    private const val PRODUCTION_BANNER_AD_UNIT_ID = "ca-app-pub-6757073244337160/8439187479"
 
     /**
      * Build türüne göre uygun Ad Unit ID'yi döndürür

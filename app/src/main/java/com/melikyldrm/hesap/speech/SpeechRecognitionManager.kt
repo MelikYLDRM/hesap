@@ -173,9 +173,11 @@ class SpeechRecognitionManager @Inject constructor(
                 val partialText = matches?.firstOrNull() ?: ""
 
                 if (partialText.isNotEmpty()) {
-                    // Kısmi sonuçları gösterebiliriz
-                    val parsedExpression = commandParser.parseExpression(partialText)
-                    _speechState.value = SpeechState.Success(partialText, parsedExpression)
+                    // Kısmi sonuç - henüz tamamlanmadı.
+                    // parseExpression ÇAĞRILMAMALI: partial text üzerinde parse etmek
+                    // "No operator found" uyarısını tetikler ve UI'ı yanlışlıkla
+                    // Success durumuna geçirir (kullanıcı hâlâ konuşuyor).
+                    _speechState.value = SpeechState.PartialResult(partialText)
                 }
             }
 
@@ -189,10 +191,7 @@ class SpeechRecognitionManager @Inject constructor(
         Log.d(TAG, "=== PROCESSING ===")
         Log.d(TAG, "Input text: '$text'")
 
-        // parseExpression sonucunu logla
-        val expressionResult = commandParser.parseExpression(text)
-        Log.d(TAG, "parseExpression result: '$expressionResult'")
-
+        // parseCommand içinde parseExpression zaten çağrılıyor - tekrar çağırmaya gerek yok
         val command = commandParser.parseCommand(text)
         Log.d(TAG, "parseCommand result: $command")
 

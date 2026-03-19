@@ -2,9 +2,9 @@ package com.melikyldrm.hesap.ui.screens.basic
 
 import android.Manifest
 import android.content.pm.PackageManager
+import android.content.res.Configuration
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.animation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Backspace
@@ -13,6 +13,7 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
@@ -30,6 +31,8 @@ fun BasicCalculatorScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val speechState by viewModel.speechState.collectAsStateWithLifecycle()
+    val configuration = LocalConfiguration.current
+    val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
 
     // Debug: State değişikliklerini logla
     LaunchedEffect(state.result) {
@@ -106,44 +109,96 @@ fun BasicCalculatorScreen(
             }
         }
 
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-        ) {
-            // Speech feedback - basit if ile göster (animasyon yok)
-            if (speechState !is SpeechState.Idle) {
-                SpeechFeedbackCard(
-                    speechState = speechState,
-                    modifier = Modifier.padding(vertical = 8.dp),
-                    onDismiss = { viewModel.resetSpeechState() }
-                )
-            }
-
-            // Display - key ile zorla güncelleme
-            key(state.result, state.expression) {
-                CalculatorDisplay(
-                    expression = state.expression,
-                    result = state.result,
-                    previousExpression = state.previousExpression,
-                    isError = state.isError,
-                    modifier = Modifier.weight(0.35f)
-                )
-            }
-
-            // Button pad
-            BasicButtonPad(
-                onNumberClick = viewModel::onNumberClick,
-                onOperatorClick = viewModel::onOperatorClick,
-                onDecimalClick = viewModel::onDecimalClick,
-                onEqualsClick = viewModel::onEqualsClick,
-                onClearClick = viewModel::onClearClick,
-                onDeleteClick = viewModel::onDeleteClick,
-                onPercentClick = viewModel::onPercentClick,
+        if (isLandscape) {
+            // ── YATAY MOD: Display solda, tuşlar sağda ──
+            Row(
                 modifier = Modifier
-                    .weight(0.65f)
-                    .padding(horizontal = 8.dp, vertical = 8.dp)
-            )
+                    .fillMaxSize()
+                    .padding(paddingValues)
+            ) {
+                // Sol: Display + speech feedback
+                Column(
+                    modifier = Modifier
+                        .weight(0.45f)
+                        .fillMaxHeight()
+                ) {
+                    // Speech feedback - basit if ile göster (animasyon yok)
+                    if (speechState !is SpeechState.Idle) {
+                        SpeechFeedbackCard(
+                            speechState = speechState,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                            onDismiss = { viewModel.resetSpeechState() }
+                        )
+                    }
+
+                    // Display - key ile zorla güncelleme
+                    key(state.result, state.expression) {
+                        CalculatorDisplay(
+                            expression = state.expression,
+                            result = state.result,
+                            previousExpression = state.previousExpression,
+                            isError = state.isError,
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                }
+
+                // Sağ: Tuş takımı
+                BasicButtonPad(
+                    onNumberClick = viewModel::onNumberClick,
+                    onOperatorClick = viewModel::onOperatorClick,
+                    onDecimalClick = viewModel::onDecimalClick,
+                    onEqualsClick = viewModel::onEqualsClick,
+                    onClearClick = viewModel::onClearClick,
+                    onDeleteClick = viewModel::onDeleteClick,
+                    onPercentClick = viewModel::onPercentClick,
+                    modifier = Modifier
+                        .weight(0.55f)
+                        .fillMaxHeight()
+                        .padding(horizontal = 6.dp, vertical = 4.dp)
+                )
+            }
+        } else {
+            // ── DİKEY MOD: Mevcut layout ──
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+            ) {
+                // Speech feedback - basit if ile göster (animasyon yok)
+                if (speechState !is SpeechState.Idle) {
+                    SpeechFeedbackCard(
+                        speechState = speechState,
+                        modifier = Modifier.padding(vertical = 8.dp),
+                        onDismiss = { viewModel.resetSpeechState() }
+                    )
+                }
+
+                // Display - key ile zorla güncelleme
+                key(state.result, state.expression) {
+                    CalculatorDisplay(
+                        expression = state.expression,
+                        result = state.result,
+                        previousExpression = state.previousExpression,
+                        isError = state.isError,
+                        modifier = Modifier.weight(0.40f) // Increased from 0.35f
+                    )
+                }
+
+                // Button pad
+                BasicButtonPad(
+                    onNumberClick = viewModel::onNumberClick,
+                    onOperatorClick = viewModel::onOperatorClick,
+                    onDecimalClick = viewModel::onDecimalClick,
+                    onEqualsClick = viewModel::onEqualsClick,
+                    onClearClick = viewModel::onClearClick,
+                    onDeleteClick = viewModel::onDeleteClick,
+                    onPercentClick = viewModel::onPercentClick,
+                    modifier = Modifier
+                        .weight(0.60f) // Decreased from 0.65f
+                        .padding(horizontal = 8.dp, vertical = 8.dp)
+                )
+            }
         }
     }
 }
@@ -180,8 +235,7 @@ fun BasicButtonPad(
                 icon = {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.Backspace,
-                        contentDescription = "Sil",
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        contentDescription = "Sil"
                     )
                 },
                 onClick = onDeleteClick,
@@ -323,4 +377,3 @@ fun BasicButtonPad(
         }
     }
 }
-
