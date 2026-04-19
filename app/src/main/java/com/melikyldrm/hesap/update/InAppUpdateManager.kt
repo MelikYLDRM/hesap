@@ -2,7 +2,7 @@ package com.melikyldrm.hesap.update
 
 import android.app.Activity
 import android.content.Context
-import android.util.Log
+import timber.log.Timber
 import androidx.activity.ComponentActivity
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.IntentSenderRequest
@@ -31,8 +31,6 @@ class InAppUpdateManager(
     private val activity: ComponentActivity
 ) {
     companion object {
-        private const val TAG = "InAppUpdate"
-
         // Kaç gün sonra güncelleme zorunlu olsun (IMMEDIATE)
         private const val DAYS_FOR_IMMEDIATE_UPDATE = 7
 
@@ -60,30 +58,30 @@ class InAppUpdateManager(
                         (bytesDownloaded * 100 / totalBytesToDownload).toInt()
                     } else 0
                     _updateState.value = UpdateState.Downloading(progress)
-                    Log.d(TAG, "Downloading: $progress%")
+                    Timber.d("Downloading: $progress%")
                 }
                 InstallStatus.DOWNLOADED -> {
                     _updateState.value = UpdateState.Downloaded
-                    Log.d(TAG, "Update downloaded, ready to install")
+                    Timber.d("Update downloaded, ready to install")
                 }
                 InstallStatus.INSTALLING -> {
                     _updateState.value = UpdateState.Installing
-                    Log.d(TAG, "Installing update...")
+                    Timber.d("Installing update...")
                 }
                 InstallStatus.INSTALLED -> {
                     _updateState.value = UpdateState.Installed
-                    Log.d(TAG, "Update installed")
+                    Timber.d("Update installed")
                     if (::installStateUpdatedListener.isInitialized) {
                         appUpdateManager.unregisterListener(installStateUpdatedListener)
                     }
                 }
                 InstallStatus.FAILED -> {
                     _updateState.value = UpdateState.Failed("Güncelleme başarısız oldu")
-                    Log.e(TAG, "Update failed")
+                    Timber.e("Update failed")
                 }
                 InstallStatus.CANCELED -> {
                     _updateState.value = UpdateState.Idle
-                    Log.d(TAG, "Update canceled by user")
+                    Timber.d("Update canceled by user")
                 }
                 else -> {}
             }
@@ -100,15 +98,15 @@ class InAppUpdateManager(
         ) { result ->
             when (result.resultCode) {
                 Activity.RESULT_OK -> {
-                    Log.d(TAG, "Update flow started successfully")
+                    Timber.d("Update flow started successfully")
                     _updateState.value = UpdateState.UpdateStarted
                 }
                 Activity.RESULT_CANCELED -> {
-                    Log.d(TAG, "Update canceled by user")
+                    Timber.d("Update canceled by user")
                     _updateState.value = UpdateState.Idle
                 }
                 else -> {
-                    Log.e(TAG, "Update flow failed with result code: ${result.resultCode}")
+                    Timber.e("Update flow failed with result code: ${result.resultCode}")
                     _updateState.value = UpdateState.Failed("Güncelleme başlatılamadı")
                 }
             }
@@ -119,7 +117,7 @@ class InAppUpdateManager(
      * Güncelleme olup olmadığını kontrol et
      */
     fun checkForUpdates() {
-        Log.d(TAG, "Checking for updates...")
+        Timber.d("Checking for updates...")
         _updateState.value = UpdateState.Checking
 
         appUpdateManager.appUpdateInfo
@@ -127,7 +125,7 @@ class InAppUpdateManager(
                 handleUpdateInfo(appUpdateInfo)
             }
             .addOnFailureListener { exception ->
-                Log.e(TAG, "Failed to check for updates", exception)
+                Timber.e("Failed to check for updates", exception)
                 _updateState.value = UpdateState.Failed("Güncelleme kontrolü başarısız: ${exception.message}")
             }
     }
@@ -135,7 +133,7 @@ class InAppUpdateManager(
     private fun handleUpdateInfo(appUpdateInfo: AppUpdateInfo) {
         when (appUpdateInfo.updateAvailability()) {
             UpdateAvailability.UPDATE_AVAILABLE -> {
-                Log.d(TAG, "Update available! Version code: ${appUpdateInfo.availableVersionCode()}")
+                Timber.d("Update available! Version code: ${appUpdateInfo.availableVersionCode()}")
 
                 // Update type'ı belirle
                 val updateType = determineUpdateType(appUpdateInfo)
@@ -156,23 +154,23 @@ class InAppUpdateManager(
                     )
                     startUpdate(appUpdateInfo, AppUpdateType.FLEXIBLE)
                 } else {
-                    Log.d(TAG, "Update type not allowed")
+                    Timber.d("Update type not allowed")
                     _updateState.value = UpdateState.NoUpdate
                 }
             }
             UpdateAvailability.UPDATE_NOT_AVAILABLE -> {
-                Log.d(TAG, "No update available")
+                Timber.d("No update available")
                 _updateState.value = UpdateState.NoUpdate
             }
             UpdateAvailability.DEVELOPER_TRIGGERED_UPDATE_IN_PROGRESS -> {
-                Log.d(TAG, "Update already in progress")
+                Timber.d("Update already in progress")
                 // Devam eden güncellemeyi tamamla
                 if (appUpdateInfo.isUpdateTypeAllowed(AppUpdateType.IMMEDIATE)) {
                     startUpdate(appUpdateInfo, AppUpdateType.IMMEDIATE)
                 }
             }
             else -> {
-                Log.d(TAG, "Unknown update availability")
+                Timber.d("Unknown update availability")
                 _updateState.value = UpdateState.NoUpdate
             }
         }
@@ -196,7 +194,7 @@ class InAppUpdateManager(
     }
 
     private fun startUpdate(appUpdateInfo: AppUpdateInfo, updateType: Int) {
-        Log.d(TAG, "Starting update with type: ${if (updateType == AppUpdateType.IMMEDIATE) "IMMEDIATE" else "FLEXIBLE"}")
+        Timber.d("Starting update with type: ${if (updateType == AppUpdateType.IMMEDIATE) "IMMEDIATE" else "FLEXIBLE"}")
 
         // Flexible güncelleme için listener kaydet
         if (updateType == AppUpdateType.FLEXIBLE) {
@@ -210,7 +208,7 @@ class InAppUpdateManager(
                 AppUpdateOptions.newBuilder(updateType).build()
             )
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to start update", e)
+            Timber.e("Failed to start update", e)
             _updateState.value = UpdateState.Failed("Güncelleme başlatılamadı: ${e.message}")
         }
     }
@@ -219,7 +217,7 @@ class InAppUpdateManager(
      * İndirilen güncellemeyi yükle (Flexible update için)
      */
     fun completeUpdate() {
-        Log.d(TAG, "Completing update...")
+        Timber.d("Completing update...")
         appUpdateManager.completeUpdate()
     }
 

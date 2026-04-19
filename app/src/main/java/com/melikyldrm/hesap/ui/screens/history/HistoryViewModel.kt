@@ -43,49 +43,47 @@ class HistoryViewModel @Inject constructor(
         viewModelScope.launch {
             historyRepository.getAllHistory()
                 .collect { history ->
-                    _state.value = _state.value.copy(
-                        allHistory = history,
-                        isLoading = false
-                    )
+                    _state.update { it.copy(allHistory = history, isLoading = false) }
                     applyFilter()
                 }
         }
     }
 
     fun setFilter(filter: HistoryFilter) {
-        _state.value = _state.value.copy(selectedFilter = filter)
+        _state.update { it.copy(selectedFilter = filter) }
         applyFilter()
     }
 
     fun setSearchQuery(query: String) {
-        _state.value = _state.value.copy(searchQuery = query)
+        _state.update { it.copy(searchQuery = query) }
         applyFilter()
     }
 
     private fun applyFilter() {
-        val currentState = _state.value
-        var filtered = currentState.allHistory
+        _state.update { currentState ->
+            var filtered = currentState.allHistory
 
-        // Apply type filter
-        filtered = when (currentState.selectedFilter) {
-            HistoryFilter.ALL -> filtered
-            HistoryFilter.FAVORITES -> filtered.filter { it.isFavorite }
-            HistoryFilter.BASIC -> filtered.filter { it.type == CalculationType.BASIC }
-            HistoryFilter.SCIENTIFIC -> filtered.filter { it.type == CalculationType.SCIENTIFIC }
-            HistoryFilter.FINANCE -> filtered.filter { it.type == CalculationType.FINANCE }
-            HistoryFilter.CONVERTER -> filtered.filter { it.type == CalculationType.CONVERTER }
-        }
-
-        // Apply search query
-        if (currentState.searchQuery.isNotBlank()) {
-            val query = currentState.searchQuery.lowercase()
-            filtered = filtered.filter {
-                it.expression.lowercase().contains(query) ||
-                it.result.lowercase().contains(query)
+            // Apply type filter
+            filtered = when (currentState.selectedFilter) {
+                HistoryFilter.ALL -> filtered
+                HistoryFilter.FAVORITES -> filtered.filter { it.isFavorite }
+                HistoryFilter.BASIC -> filtered.filter { it.type == CalculationType.BASIC }
+                HistoryFilter.SCIENTIFIC -> filtered.filter { it.type == CalculationType.SCIENTIFIC }
+                HistoryFilter.FINANCE -> filtered.filter { it.type == CalculationType.FINANCE }
+                HistoryFilter.CONVERTER -> filtered.filter { it.type == CalculationType.CONVERTER }
             }
-        }
 
-        _state.value = currentState.copy(filteredHistory = filtered)
+            // Apply search query
+            if (currentState.searchQuery.isNotBlank()) {
+                val query = currentState.searchQuery.lowercase()
+                filtered = filtered.filter {
+                    it.expression.lowercase().contains(query) ||
+                    it.result.lowercase().contains(query)
+                }
+            }
+
+            currentState.copy(filteredHistory = filtered)
+        }
     }
 
     fun toggleFavorite(id: Long) {
@@ -112,4 +110,3 @@ class HistoryViewModel @Inject constructor(
         }
     }
 }
-

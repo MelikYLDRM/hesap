@@ -178,21 +178,38 @@ class CalculatorEngine @Inject constructor() {
     /**
      * Pre-process the expression to handle special cases
      */
+    companion object {
+        // Pre-compiled regex patterns for performance
+        private val STANDALONE_E_REGEX = Regex("(?<![a-zA-Z])e(?![a-zA-Z])")
+        private val STANDALONE_PI_REGEX = Regex("(?<![a-zA-Z])π(?![a-zA-Z])")
+        // Implicit mult: digit followed by opening paren, but NOT when digit is part of a function name like log10
+        private val IMPLICIT_MULT_PAREN_OPEN = Regex("(?<![a-zA-Z])(\\d)\\(")
+        private val IMPLICIT_MULT_PAREN_CLOSE = Regex("\\)(\\d)")
+        private val IMPLICIT_MULT_FUNC = Regex("(\\d)(sind|cosd|tand|asind|acosd|atand|sin|cos|tan|log10|log|ln|sqrt|cbrt|abs|exp|ceil|floor|round|factorial|perm|comb)")
+        // Known function names ending with digits (need special protection)
+        private val FUNC_DIGIT_PAREN = Regex("(log10)\\(")
+    }
+
     private fun preprocessExpression(expression: String): String {
         var result = expression
             .replace("×", "*")
             .replace("÷", "/")
             .replace("−", "-")
-            .replace("π", "3.14159265358979323846")
-            .replace("e", "2.71828182845904523536")
             .replace("²", "^2")
             .replace("³", "^3")
             .replace("√", "sqrt")
 
+        // Replace standalone constants (not part of function names)
+        result = STANDALONE_PI_REGEX.replace(result, "3.14159265358979323846")
+        result = STANDALONE_E_REGEX.replace(result, "2.71828182845904523536")
+
         // Handle implicit multiplication (e.g., "2(3)" -> "2*(3)", "2sin" -> "2*sin")
-        result = result.replace(Regex("(\\d)\\(")) { "${it.groupValues[1]}*(" }
-        result = result.replace(Regex("\\)(\\d)")) { ")*${it.groupValues[1]}" }
-        result = result.replace(Regex("(\\d)(sin|cos|tan|log|ln|sqrt|abs|exp)")) {
+        // First protect function names that end with digits (like log10)
+        result = FUNC_DIGIT_PAREN.replace(result) { "${it.groupValues[1]}#PAREN#" }
+        result = IMPLICIT_MULT_PAREN_OPEN.replace(result) { "${it.groupValues[1]}*(" }
+        result = result.replace("#PAREN#", "(")
+        result = IMPLICIT_MULT_PAREN_CLOSE.replace(result) { ")*${it.groupValues[1]}" }
+        result = IMPLICIT_MULT_FUNC.replace(result) {
             "${it.groupValues[1]}*${it.groupValues[2]}"
         }
 

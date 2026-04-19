@@ -41,40 +41,41 @@ class ConverterViewModel @Inject constructor(
 
     fun selectCategory(category: UnitCategory) {
         val units = unitConverter.getUnitsForCategory(category)
-        _state.value = _state.value.copy(
-            selectedCategory = category,
-            availableUnits = units,
-            fromUnit = units.firstOrNull()?.first ?: "",
-            toUnit = units.getOrNull(1)?.first ?: units.firstOrNull()?.first ?: "",
-            inputValue = "",
-            result = "",
-            errorMessage = null
-        )
+        _state.update {
+            it.copy(
+                selectedCategory = category,
+                availableUnits = units,
+                fromUnit = units.firstOrNull()?.first ?: "",
+                toUnit = units.getOrNull(1)?.first ?: units.firstOrNull()?.first ?: "",
+                inputValue = "",
+                result = "",
+                errorMessage = null
+            )
+        }
     }
 
     fun updateInputValue(value: String) {
-        _state.value = _state.value.copy(
-            inputValue = value.filter { it.isDigit() || it == '.' || it == '-' }
-        )
+        _state.update { it.copy(inputValue = value.filter { c -> c.isDigit() || c == '.' || c == '-' }) }
         calculateConversion()
     }
 
     fun updateFromUnit(unit: String) {
-        _state.value = _state.value.copy(fromUnit = unit)
+        _state.update { it.copy(fromUnit = unit) }
         calculateConversion()
     }
 
     fun updateToUnit(unit: String) {
-        _state.value = _state.value.copy(toUnit = unit)
+        _state.update { it.copy(toUnit = unit) }
         calculateConversion()
     }
 
     fun swapUnits() {
-        val currentState = _state.value
-        _state.value = currentState.copy(
-            fromUnit = currentState.toUnit,
-            toUnit = currentState.fromUnit
-        )
+        _state.update {
+            it.copy(
+                fromUnit = it.toUnit,
+                toUnit = it.fromUnit
+            )
+        }
         calculateConversion()
     }
 
@@ -83,7 +84,7 @@ class ConverterViewModel @Inject constructor(
         val inputValue = currentState.inputValue.toDoubleOrNull()
 
         if (inputValue == null) {
-            _state.value = currentState.copy(result = "", errorMessage = null)
+            _state.update { it.copy(result = "", errorMessage = null) }
             return
         }
 
@@ -96,15 +97,9 @@ class ConverterViewModel @Inject constructor(
             )
 
             val formattedResult = unitConverter.formatResult(conversionResult.toValue)
-            _state.value = currentState.copy(
-                result = formattedResult,
-                errorMessage = null
-            )
+            _state.update { it.copy(result = formattedResult, errorMessage = null) }
         } catch (e: Exception) {
-            _state.value = currentState.copy(
-                result = "",
-                errorMessage = e.message ?: "Dönüşüm hatası"
-            )
+            _state.update { it.copy(result = "", errorMessage = e.message ?: "Dönüşüm hatası") }
         }
     }
 
@@ -127,23 +122,27 @@ class ConverterViewModel @Inject constructor(
     // Currency conversion with API
     fun loadExchangeRates() {
         viewModelScope.launch {
-            _state.value = _state.value.copy(isLoadingRates = true)
+            _state.update { it.copy(isLoadingRates = true) }
 
             val targetCurrencies = listOf("USD", "EUR", "GBP", "JPY", "CHF", "CAD", "AUD", "TRY")
             exchangeRepository.fetchLatestRates("EUR", targetCurrencies).fold(
                 onSuccess = { rates ->
-                    _state.value = _state.value.copy(
-                        exchangeRates = rates,
-                        isLoadingRates = false,
-                        lastRateUpdate = System.currentTimeMillis(),
-                        errorMessage = null
-                    )
+                    _state.update {
+                        it.copy(
+                            exchangeRates = rates,
+                            isLoadingRates = false,
+                            lastRateUpdate = System.currentTimeMillis(),
+                            errorMessage = null
+                        )
+                    }
                 },
                 onFailure = { error ->
-                    _state.value = _state.value.copy(
-                        isLoadingRates = false,
-                        errorMessage = "Döviz kurları alınamadı: ${error.message}"
-                    )
+                    _state.update {
+                        it.copy(
+                            isLoadingRates = false,
+                            errorMessage = "Döviz kurları alınamadı: ${error.message}"
+                        )
+                    }
                 }
             )
         }
@@ -153,18 +152,17 @@ class ConverterViewModel @Inject constructor(
         viewModelScope.launch {
             exchangeRepository.convertCurrency(amount, fromCurrency, toCurrency).fold(
                 onSuccess = { result ->
-                    _state.value = _state.value.copy(
-                        result = unitConverter.formatResult(result),
-                        errorMessage = null
-                    )
+                    _state.update {
+                        it.copy(
+                            result = unitConverter.formatResult(result),
+                            errorMessage = null
+                        )
+                    }
                 },
                 onFailure = { error ->
-                    _state.value = _state.value.copy(
-                        errorMessage = error.message
-                    )
+                    _state.update { it.copy(errorMessage = error.message) }
                 }
             )
         }
     }
 }
-

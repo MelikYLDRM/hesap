@@ -4,6 +4,7 @@ import com.melikyldrm.hesap.domain.model.*
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.math.pow
+import kotlin.math.sqrt
 
 @Singleton
 class FinanceCalculator @Inject constructor() {
@@ -268,6 +269,101 @@ class FinanceCalculator @Inject constructor() {
      */
     fun formatPercentage(value: Double): String {
         return String.format("%.2f%%", value)
+    }
+
+    /**
+     * Kredi Hesaplama (Amortisman tablosu ile)
+     */
+    fun calculateLoan(
+        principal: Double,
+        annualRate: Double,
+        months: Int
+    ): KrediResult {
+        val monthlyRate = annualRate / 100.0 / 12.0
+
+        val monthlyPayment = if (monthlyRate == 0.0) {
+            principal / months
+        } else {
+            principal * (monthlyRate * (1 + monthlyRate).pow(months)) /
+                ((1 + monthlyRate).pow(months) - 1)
+        }
+
+        val schedule = mutableListOf<KrediScheduleItem>()
+        var remaining = principal
+
+        for (month in 1..months) {
+            val interestPart = remaining * monthlyRate
+            val principalPart = monthlyPayment - interestPart
+            remaining -= principalPart
+            schedule.add(
+                KrediScheduleItem(
+                    month = month,
+                    payment = monthlyPayment,
+                    principal = principalPart,
+                    interest = interestPart,
+                    remainingBalance = maxOf(0.0, remaining)
+                )
+            )
+        }
+
+        val totalPayment = monthlyPayment * months
+        return KrediResult(
+            principal = principal,
+            monthlyRate = annualRate / 12.0,
+            months = months,
+            monthlyPayment = monthlyPayment,
+            totalPayment = totalPayment,
+            totalInterest = totalPayment - principal,
+            schedule = schedule
+        )
+    }
+
+    /**
+     * BMI Hesaplama
+     */
+    fun calculateBmi(weightKg: Double, heightCm: Double): BmiResult {
+        val heightM = heightCm / 100.0
+        val bmi = weightKg / (heightM * heightM)
+        val category = when {
+            bmi < 18.5 -> "Zayıf"
+            bmi < 25.0 -> "Normal"
+            bmi < 30.0 -> "Fazla Kilolu"
+            bmi < 35.0 -> "Obez (Sınıf I)"
+            bmi < 40.0 -> "Obez (Sınıf II)"
+            else -> "Morbid Obez"
+        }
+        val healthyMin = 18.5 * heightM * heightM
+        val healthyMax = 24.9 * heightM * heightM
+
+        return BmiResult(
+            bmi = bmi,
+            category = category,
+            healthyWeightRange = Pair(healthyMin, healthyMax),
+            height = heightCm,
+            weight = weightKg
+        )
+    }
+
+    /**
+     * Bahşiş Hesaplama
+     */
+    fun calculateTip(
+        billAmount: Double,
+        tipPercentage: Double,
+        numberOfPeople: Int
+    ): TipResult {
+        val tipAmount = billAmount * tipPercentage / 100.0
+        val totalAmount = billAmount + tipAmount
+        val perPerson = totalAmount / numberOfPeople
+
+        return TipResult(
+            billAmount = billAmount,
+            tipPercentage = tipPercentage,
+            tipAmount = tipAmount,
+            totalAmount = totalAmount,
+            perPerson = perPerson,
+            numberOfPeople = numberOfPeople
+        )
     }
 }
 

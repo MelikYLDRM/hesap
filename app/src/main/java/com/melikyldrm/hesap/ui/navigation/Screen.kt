@@ -13,7 +13,7 @@ sealed class Screen(
 ) {
     data object Basic : Screen(
         route = "basic",
-        title = "Temel",
+        title = "Hesap",
         selectedIcon = Icons.Filled.Calculate,
         unselectedIcon = Icons.Outlined.Calculate
     )
@@ -61,7 +61,6 @@ sealed class Screen(
     )
 
     companion object {
-        val bottomNavItems = listOf(Basic, Scientific, Finance, Converter, Exchange)
+        val bottomNavItems = listOf(Basic, Finance, Converter, Exchange)
     }
 }
-

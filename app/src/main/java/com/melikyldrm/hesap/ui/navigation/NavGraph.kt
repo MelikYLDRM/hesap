@@ -1,6 +1,7 @@
 package com.melikyldrm.hesap.ui.navigation
 
 import androidx.compose.animation.*
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -17,6 +18,8 @@ import com.melikyldrm.hesap.ui.screens.history.HistoryScreen
 import com.melikyldrm.hesap.ui.screens.scientific.ScientificCalculatorScreen
 import com.melikyldrm.hesap.ui.screens.settings.SettingsScreen
 
+private const val NAV_ANIM_DURATION = 200
+
 @Composable
 fun CalculatorNavHost(
     navController: NavHostController,
@@ -28,11 +31,10 @@ fun CalculatorNavHost(
         navController = navController,
         startDestination = Screen.Basic.route,
         modifier = modifier,
-        // Animasyonları kaldırarak startup'ı hızlandır
-        enterTransition = { EnterTransition.None },
-        exitTransition = { ExitTransition.None },
-        popEnterTransition = { EnterTransition.None },
-        popExitTransition = { ExitTransition.None }
+        enterTransition = { fadeIn(animationSpec = tween(NAV_ANIM_DURATION)) },
+        exitTransition = { fadeOut(animationSpec = tween(NAV_ANIM_DURATION)) },
+        popEnterTransition = { fadeIn(animationSpec = tween(NAV_ANIM_DURATION)) },
+        popExitTransition = { fadeOut(animationSpec = tween(NAV_ANIM_DURATION)) }
     ) {
         composable(Screen.Basic.route) {
             BasicCalculatorScreen(

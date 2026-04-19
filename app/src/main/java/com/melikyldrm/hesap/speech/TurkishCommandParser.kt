@@ -1,5 +1,6 @@
 package com.melikyldrm.hesap.speech
 
+import timber.log.Timber
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -11,23 +12,6 @@ class TurkishCommandParser @Inject constructor(
     private val numberParser: TurkishNumberParser
 ) {
 
-    // Safe logging - Unit testlerde crash olmaz
-    private fun logDebug(message: String) {
-        try {
-            android.util.Log.d("TurkishParser", message)
-        } catch (_: Exception) {
-            // Unit testlerde android.util.Log mevcut değil
-            println("TurkishParser: $message")
-        }
-    }
-
-    private fun logWarning(message: String) {
-        try {
-            android.util.Log.w("TurkishParser", message)
-        } catch (_: Exception) {
-            println("TurkishParser WARNING: $message")
-        }
-    }
 
     // İşlem kelimeleri
     private val operatorMappings = mapOf(
@@ -153,20 +137,20 @@ class TurkishCommandParser @Inject constructor(
      */
     fun parseExpression(spokenText: String): String {
         var result = spokenText.lowercase().trim()
-        logDebug("Step 0 - Input: '$result'")
+        Timber.d("Step 0 - Input: '$result'")
 
         // Önce Türkçe binlik ayırıcıları temizle (20.000 -> 20000, 1.000.000 -> 1000000)
         // Bu adım replaceNumberWords'den ÖNCE yapılmalı
         result = removeTurkishThousandsSeparator(result)
-        logDebug("Step 0.5 - After removing thousands separator: '$result'")
+        Timber.d("Step 0.5 - After removing thousands separator: '$result'")
 
         // Önce sayı kelimelerini rakamlara çevir (işlem kelimeleri korunur)
         result = numberParser.replaceNumberWords(result)
-        logDebug("Step 1 - After replaceNumberWords: '$result'")
+        Timber.d("Step 1 - After replaceNumberWords: '$result'")
 
         // Ondalıkları normalize et (virgül/nokta)
         result = normalizeDecimals(result)
-        logDebug("Step 1.5 - After normalizeDecimals: '$result'")
+        Timber.d("Step 1.5 - After normalizeDecimals: '$result'")
 
         // İşlem kelimelerini sembollere çevir - boşluk opsiyonel (\\s* kullan)
         // Bölme (tüm varyasyonlar)
@@ -207,7 +191,7 @@ class TurkishCommandParser @Inject constructor(
         // "-" sembolü de çıkarma olarak işlenmeli (boşluklarla çevrili)
         result = result.replace(Regex("(\\d)\\s+-\\s+(\\d)"), "$1-$2")
 
-        logDebug("Step 2 - After operator replacement: '$result'")
+        Timber.d("Step 2 - After operator replacement: '$result'")
 
         // Fonksiyon kelimelerini çevir
         functionMappings.forEach { (word, symbol) ->
@@ -231,15 +215,15 @@ class TurkishCommandParser @Inject constructor(
 
         // Gereksiz boşlukları temizle
         result = result.replace(Regex("\\s+"), "")
-        logDebug("Step 3 - After space removal: '$result'")
+        Timber.d("Step 3 - After space removal: '$result'")
 
         // Sadece geçerli karakterleri tut (sayılar, operatörler, nokta)
         result = result.filter { it.isDigit() || it in "+-*/.()^√²³" }
-        logDebug("Step 4 - Final result: '$result'")
+        Timber.d("Step 4 - Final result: '$result'")
 
         // GÜVENLİK KONTROLÜ: operatörsüz bir şey geldiyse logla
         if (result.isNotEmpty() && !result.contains(Regex("[+\\-*/^]"))) {
-            logWarning("No operator found in result: '$result'")
+            Timber.w("No operator found in result: '$result'")
         }
 
         return result

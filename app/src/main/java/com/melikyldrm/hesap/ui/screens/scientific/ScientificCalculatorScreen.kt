@@ -4,6 +4,7 @@ import android.content.res.Configuration
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Backspace
+import androidx.compose.material.icons.filled.Calculate
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
@@ -20,6 +21,7 @@ import com.melikyldrm.hesap.ui.components.*
 fun ScientificCalculatorScreen(
     onHistoryClick: () -> Unit,
     onSettingsClick: () -> Unit,
+    onToggleMode: (() -> Unit)? = null,
     viewModel: ScientificViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -32,6 +34,13 @@ fun ScientificCalculatorScreen(
         topBar = {
             TopAppBar(
                 title = { Text("Bilimsel Hesap Makinesi") },
+                navigationIcon = {
+                    if (onToggleMode != null) {
+                        IconButton(onClick = onToggleMode) {
+                            Icon(Icons.Default.Calculate, contentDescription = "Temel Mod")
+                        }
+                    }
+                },
                 actions = {
                     IconButton(onClick = onHistoryClick) {
                         Icon(Icons.Default.History, contentDescription = "Geçmiş")

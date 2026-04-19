@@ -33,6 +33,20 @@ data class FinanceUiState(
     val karCostPrice: String = "",
     val karSellingPrice: String = "",
     val karResult: KarZararResult? = null,
+    // Kredi
+    val krediAmount: String = "",
+    val krediRate: String = "",
+    val krediMonths: String = "",
+    val krediResult: KrediResult? = null,
+    // BMI
+    val bmiWeight: String = "",
+    val bmiHeight: String = "",
+    val bmiResult: BmiResult? = null,
+    // Bahşiş
+    val tipBill: String = "",
+    val tipPercentage: String = "15",
+    val tipPeople: String = "1",
+    val tipResult: TipResult? = null,
     // Error
     val errorMessage: String? = null
 )
@@ -41,7 +55,10 @@ enum class FinanceTab(val title: String) {
     KDV("KDV"),
     TEVKIFAT("Tevkifat"),
     FAIZ("Faiz"),
-    KAR_ZARAR("Kâr/Zarar")
+    KAR_ZARAR("Kâr/Zarar"),
+    KREDI("Kredi"),
+    BMI("BMI"),
+    BAHSIS("Bahşiş")
 }
 
 @HiltViewModel
@@ -54,116 +71,118 @@ class FinanceViewModel @Inject constructor(
     val state: StateFlow<FinanceUiState> = _state.asStateFlow()
 
     fun selectTab(tab: FinanceTab) {
-        _state.value = _state.value.copy(selectedTab = tab, errorMessage = null)
+        _state.update { it.copy(selectedTab = tab, errorMessage = null) }
     }
 
     // ========== KDV ==========
     fun updateKdvAmount(amount: String) {
-        _state.value = _state.value.copy(kdvAmount = amount.filter { it.isDigit() || it == '.' })
+        _state.update { it.copy(kdvAmount = amount.filter { c -> c.isDigit() || c == '.' }) }
     }
 
     fun updateKdvRate(rate: KdvRate) {
-        _state.value = _state.value.copy(kdvRate = rate)
+        _state.update { it.copy(kdvRate = rate) }
     }
 
     fun toggleKdvIncluded() {
-        _state.value = _state.value.copy(isKdvIncluded = !_state.value.isKdvIncluded)
+        _state.update { it.copy(isKdvIncluded = !it.isKdvIncluded) }
     }
 
     fun calculateKdv() {
-        val amount = _state.value.kdvAmount.toDoubleOrNull()
+        val currentState = _state.value
+        val amount = currentState.kdvAmount.toDoubleOrNull()
         if (amount == null || amount <= 0) {
-            _state.value = _state.value.copy(errorMessage = "Geçerli bir tutar girin")
+            _state.update { it.copy(errorMessage = "Gecerli bir tutar girin") }
             return
         }
 
         val result = financeCalculator.calculateKdv(
             amount = amount,
-            kdvRate = _state.value.kdvRate,
-            isKdvIncluded = _state.value.isKdvIncluded
+            kdvRate = currentState.kdvRate,
+            isKdvIncluded = currentState.isKdvIncluded
         )
 
-        _state.value = _state.value.copy(kdvResult = result, errorMessage = null)
+        _state.update { it.copy(kdvResult = result, errorMessage = null) }
 
-        // Save to history
-        val expression = if (_state.value.isKdvIncluded) {
-            "${financeCalculator.formatCurrency(amount)} (KDV Dahil) @ %${(_state.value.kdvRate.rate * 100).toInt()}"
+        val expression = if (currentState.isKdvIncluded) {
+            "${financeCalculator.formatCurrency(amount)} (KDV Dahil) @ %${(currentState.kdvRate.rate * 100).toInt()}"
         } else {
-            "${financeCalculator.formatCurrency(amount)} + %${(_state.value.kdvRate.rate * 100).toInt()} KDV"
+            "${financeCalculator.formatCurrency(amount)} + %${(currentState.kdvRate.rate * 100).toInt()} KDV"
         }
         saveToHistory(expression, financeCalculator.formatCurrency(result.totalAmount), "KDV")
     }
 
     // ========== TEVKIFAT ==========
     fun updateTevkifatAmount(amount: String) {
-        _state.value = _state.value.copy(tevkifatAmount = amount.filter { it.isDigit() || it == '.' })
+        _state.update { it.copy(tevkifatAmount = amount.filter { c -> c.isDigit() || c == '.' }) }
     }
 
     fun updateTevkifatKdvRate(rate: KdvRate) {
-        _state.value = _state.value.copy(tevkifatKdvRate = rate)
+        _state.update { it.copy(tevkifatKdvRate = rate) }
     }
 
     fun updateTevkifatRate(rate: TevkifatRate) {
-        _state.value = _state.value.copy(tevkifatRate = rate)
+        _state.update { it.copy(tevkifatRate = rate) }
     }
 
     fun calculateTevkifat() {
-        val amount = _state.value.tevkifatAmount.toDoubleOrNull()
+        val currentState = _state.value
+        val amount = currentState.tevkifatAmount.toDoubleOrNull()
         if (amount == null || amount <= 0) {
-            _state.value = _state.value.copy(errorMessage = "Geçerli bir tutar girin")
+            _state.update { it.copy(errorMessage = "Gecerli bir tutar girin") }
             return
         }
 
         val result = financeCalculator.calculateTevkifat(
             baseAmount = amount,
-            kdvRate = _state.value.tevkifatKdvRate,
-            tevkifatRate = _state.value.tevkifatRate
+            kdvRate = currentState.tevkifatKdvRate,
+            tevkifatRate = currentState.tevkifatRate
         )
 
-        _state.value = _state.value.copy(tevkifatResult = result, errorMessage = null)
+        _state.update { it.copy(tevkifatResult = result, errorMessage = null) }
 
-        val expression = "${financeCalculator.formatCurrency(amount)} @ %${(_state.value.tevkifatKdvRate.rate * 100).toInt()} KDV, ${_state.value.tevkifatRate.displayName} Tevkifat"
+        val expression = "${financeCalculator.formatCurrency(amount)} @ %${(currentState.tevkifatKdvRate.rate * 100).toInt()} KDV, ${currentState.tevkifatRate.displayName} Tevkifat"
         saveToHistory(expression, financeCalculator.formatCurrency(result.totalAmount), "TEVKIFAT")
     }
 
     // ========== FAİZ ==========
     fun updateFaizPrincipal(value: String) {
-        _state.value = _state.value.copy(faizPrincipal = value.filter { it.isDigit() || it == '.' })
+        _state.update { it.copy(faizPrincipal = value.filter { c -> c.isDigit() || c == '.' }) }
     }
 
     fun updateFaizRate(value: String) {
-        _state.value = _state.value.copy(faizRate = value.filter { it.isDigit() || it == '.' })
+        _state.update { it.copy(faizRate = value.filter { c -> c.isDigit() || c == '.' }) }
     }
 
     fun updateFaizTime(value: String) {
-        _state.value = _state.value.copy(faizTime = value.filter { it.isDigit() || it == '.' })
+        _state.update { it.copy(faizTime = value.filter { c -> c.isDigit() || c == '.' }) }
     }
 
     fun updateFaizFrequency(frequency: CompoundFrequency) {
-        _state.value = _state.value.copy(faizFrequency = frequency)
+        _state.update { it.copy(faizFrequency = frequency) }
     }
 
     fun toggleCompoundInterest() {
-        _state.value = _state.value.copy(isCompoundInterest = !_state.value.isCompoundInterest)
+        _state.update { it.copy(isCompoundInterest = !it.isCompoundInterest) }
     }
 
     fun calculateFaiz() {
-        val principal = _state.value.faizPrincipal.toDoubleOrNull()
-        val rate = _state.value.faizRate.toDoubleOrNull()
-        val time = _state.value.faizTime.toDoubleOrNull()
+        val currentState = _state.value
+        val principal = currentState.faizPrincipal.toDoubleOrNull()
+        val rate = currentState.faizRate.toDoubleOrNull()
+        val time = currentState.faizTime.toDoubleOrNull()
 
         if (principal == null || rate == null || time == null ||
             principal <= 0 || rate < 0 || time <= 0) {
-            _state.value = _state.value.copy(errorMessage = "Geçerli değerler girin")
+            _state.update { it.copy(errorMessage = "Gecerli degerler girin") }
             return
         }
 
-        val result = if (_state.value.isCompoundInterest) {
+        val result = if (currentState.isCompoundInterest) {
             financeCalculator.calculateCompoundInterest(
                 principal = principal,
                 annualRate = rate,
                 timeInYears = time,
-                frequency = _state.value.faizFrequency
+                frequency = currentState.faizFrequency
             )
         } else {
             financeCalculator.calculateSimpleInterest(
@@ -173,46 +192,126 @@ class FinanceViewModel @Inject constructor(
             )
         }
 
-        _state.value = _state.value.copy(faizResult = result, errorMessage = null)
+        _state.update { it.copy(faizResult = result, errorMessage = null) }
 
-        val type = if (_state.value.isCompoundInterest) "Bileşik" else "Basit"
-        val expression = "${financeCalculator.formatCurrency(principal)} @ %$rate Faiz, $time Yıl ($type)"
+        val type = if (currentState.isCompoundInterest) "Bilesik" else "Basit"
+        val expression = "${financeCalculator.formatCurrency(principal)} @ %$rate Faiz, $time Yil ($type)"
         saveToHistory(expression, financeCalculator.formatCurrency(result.totalAmount), "FAIZ")
     }
 
-    // ========== KÂR/ZARAR ==========
+    // ========== KAR/ZARAR ==========
     fun updateKarCostPrice(value: String) {
-        _state.value = _state.value.copy(karCostPrice = value.filter { it.isDigit() || it == '.' })
+        _state.update { it.copy(karCostPrice = value.filter { c -> c.isDigit() || c == '.' }) }
     }
 
     fun updateKarSellingPrice(value: String) {
-        _state.value = _state.value.copy(karSellingPrice = value.filter { it.isDigit() || it == '.' })
+        _state.update { it.copy(karSellingPrice = value.filter { c -> c.isDigit() || c == '.' }) }
     }
 
     fun calculateKarZarar() {
-        val cost = _state.value.karCostPrice.toDoubleOrNull()
-        val selling = _state.value.karSellingPrice.toDoubleOrNull()
+        val currentState = _state.value
+        val cost = currentState.karCostPrice.toDoubleOrNull()
+        val selling = currentState.karSellingPrice.toDoubleOrNull()
 
         if (cost == null || selling == null || cost < 0 || selling < 0) {
-            _state.value = _state.value.copy(errorMessage = "Geçerli fiyatlar girin")
+            _state.update { it.copy(errorMessage = "Gecerli fiyatlar girin") }
             return
         }
 
         val result = financeCalculator.calculateProfitLoss(cost, selling)
-        _state.value = _state.value.copy(karResult = result, errorMessage = null)
+        _state.update { it.copy(karResult = result, errorMessage = null) }
 
-        val type = if (result.isProfit) "Kâr" else "Zarar"
-        val expression = "Maliyet: ${financeCalculator.formatCurrency(cost)}, Satış: ${financeCalculator.formatCurrency(selling)}"
+        val type = if (result.isProfit) "Kar" else "Zarar"
+        val expression = "Maliyet: ${financeCalculator.formatCurrency(cost)}, Satis: ${financeCalculator.formatCurrency(selling)}"
         saveToHistory(expression, "$type: ${financeCalculator.formatPercentage(result.percentage)}", "KAR_ZARAR")
     }
 
     fun clearResults() {
-        _state.value = _state.value.copy(
-            kdvResult = null,
-            tevkifatResult = null,
-            faizResult = null,
-            karResult = null,
-            errorMessage = null
+        _state.update {
+            it.copy(
+                kdvResult = null,
+                tevkifatResult = null,
+                faizResult = null,
+                karResult = null,
+                krediResult = null,
+                bmiResult = null,
+                tipResult = null,
+                errorMessage = null
+            )
+        }
+    }
+
+    // ========== KREDİ ==========
+    fun updateKrediAmount(value: String) {
+        _state.update { it.copy(krediAmount = value.filter { c -> c.isDigit() || c == '.' }) }
+    }
+    fun updateKrediRate(value: String) {
+        _state.update { it.copy(krediRate = value.filter { c -> c.isDigit() || c == '.' }) }
+    }
+    fun updateKrediMonths(value: String) {
+        _state.update { it.copy(krediMonths = value.filter { c -> c.isDigit() }) }
+    }
+    fun calculateKredi() {
+        val s = _state.value
+        val amount = s.krediAmount.toDoubleOrNull()
+        val rate = s.krediRate.toDoubleOrNull()
+        val months = s.krediMonths.toIntOrNull()
+        if (amount == null || rate == null || months == null || amount <= 0 || rate < 0 || months <= 0) {
+            _state.update { it.copy(errorMessage = "Geçerli değerler girin") }
+            return
+        }
+        val result = financeCalculator.calculateLoan(amount, rate, months)
+        _state.update { it.copy(krediResult = result, errorMessage = null) }
+        saveToHistory(
+            "${financeCalculator.formatCurrency(amount)} @ %$rate Yıllık, $months Ay",
+            "Taksit: ${financeCalculator.formatCurrency(result.monthlyPayment)}",
+            "KREDI"
+        )
+    }
+
+    // ========== BMI ==========
+    fun updateBmiWeight(value: String) {
+        _state.update { it.copy(bmiWeight = value.filter { c -> c.isDigit() || c == '.' }) }
+    }
+    fun updateBmiHeight(value: String) {
+        _state.update { it.copy(bmiHeight = value.filter { c -> c.isDigit() || c == '.' }) }
+    }
+    fun calculateBmi() {
+        val weight = _state.value.bmiWeight.toDoubleOrNull()
+        val height = _state.value.bmiHeight.toDoubleOrNull()
+        if (weight == null || height == null || weight <= 0 || height <= 0) {
+            _state.update { it.copy(errorMessage = "Geçerli değerler girin") }
+            return
+        }
+        val result = financeCalculator.calculateBmi(weight, height)
+        _state.update { it.copy(bmiResult = result, errorMessage = null) }
+        saveToHistory("${weight}kg, ${height}cm", "BMI: ${String.format("%.1f", result.bmi)} (${result.category})", "BMI")
+    }
+
+    // ========== BAHŞİŞ ==========
+    fun updateTipBill(value: String) {
+        _state.update { it.copy(tipBill = value.filter { c -> c.isDigit() || c == '.' }) }
+    }
+    fun updateTipPercentage(value: String) {
+        _state.update { it.copy(tipPercentage = value.filter { c -> c.isDigit() || c == '.' }) }
+    }
+    fun updateTipPeople(value: String) {
+        _state.update { it.copy(tipPeople = value.filter { c -> c.isDigit() }) }
+    }
+    fun calculateTip() {
+        val bill = _state.value.tipBill.toDoubleOrNull()
+        val pct = _state.value.tipPercentage.toDoubleOrNull()
+        val people = _state.value.tipPeople.toIntOrNull()
+        if (bill == null || pct == null || people == null || bill <= 0 || pct < 0 || people <= 0) {
+            _state.update { it.copy(errorMessage = "Geçerli değerler girin") }
+            return
+        }
+        val result = financeCalculator.calculateTip(bill, pct, people)
+        _state.update { it.copy(tipResult = result, errorMessage = null) }
+        saveToHistory(
+            "${financeCalculator.formatCurrency(bill)} @ %$pct, $people kişi",
+            "Kişi başı: ${financeCalculator.formatCurrency(result.perPerson)}",
+            "BAHSIS"
         )
     }
 
@@ -229,4 +328,3 @@ class FinanceViewModel @Inject constructor(
         }
     }
 }
-

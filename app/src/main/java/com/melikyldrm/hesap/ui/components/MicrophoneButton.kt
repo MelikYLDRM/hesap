@@ -3,13 +3,11 @@ package com.melikyldrm.hesap.ui.components
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.MicOff
-import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -35,29 +33,6 @@ fun MicrophoneButton(
     val isListening = speechState is SpeechState.Listening
     val isProcessing = speechState is SpeechState.Processing
 
-    // Pulse animation for listening state
-    val infiniteTransition = rememberInfiniteTransition(label = "micPulse")
-
-    val pulseScale by infiniteTransition.animateFloat(
-        initialValue = 1f,
-        targetValue = 1.2f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(600, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "pulseScale"
-    )
-
-    val pulseAlpha by infiniteTransition.animateFloat(
-        initialValue = 0.6f,
-        targetValue = 0f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(600, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "pulseAlpha"
-    )
-
     val backgroundColor = when {
         isListening -> MicActiveColor
         isProcessing -> MicActiveColor.copy(alpha = 0.7f)
@@ -70,8 +45,27 @@ fun MicrophoneButton(
         modifier = modifier,
         contentAlignment = Alignment.Center
     ) {
-        // Pulse effect background (only when listening)
+        // Pulse effect SADECE listening durumunda - idle'da GPU frame yok
         if (isListening) {
+            val infiniteTransition = rememberInfiniteTransition(label = "micPulse")
+            val pulseScale by infiniteTransition.animateFloat(
+                initialValue = 1f,
+                targetValue = 1.2f,
+                animationSpec = infiniteRepeatable(
+                    animation = tween(600, easing = FastOutSlowInEasing),
+                    repeatMode = RepeatMode.Reverse
+                ),
+                label = "pulseScale"
+            )
+            val pulseAlpha by infiniteTransition.animateFloat(
+                initialValue = 0.6f,
+                targetValue = 0f,
+                animationSpec = infiniteRepeatable(
+                    animation = tween(600, easing = FastOutSlowInEasing),
+                    repeatMode = RepeatMode.Reverse
+                ),
+                label = "pulseAlpha"
+            )
             Box(
                 modifier = Modifier
                     .size(72.dp)
@@ -138,17 +132,21 @@ fun SmallMicrophoneButton(
         else -> MicInactiveColor
     }
 
-    // Pulse animation for listening state
-    val infiniteTransition = rememberInfiniteTransition(label = "micPulseSmall")
-    val pulseScale by infiniteTransition.animateFloat(
-        initialValue = 1f,
-        targetValue = if (isListening) 1.15f else 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(500, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "pulseScaleSmall"
-    )
+    // Animasyon SADECE listening durumunda çalışır - idle'da GPU frame yok
+    val pulseScale = if (isListening) {
+        val infiniteTransition = rememberInfiniteTransition(label = "micPulseSmall")
+        infiniteTransition.animateFloat(
+            initialValue = 1f,
+            targetValue = 1.15f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(500, easing = FastOutSlowInEasing),
+                repeatMode = RepeatMode.Reverse
+            ),
+            label = "pulseScaleSmall"
+        ).value
+    } else {
+        1f
+    }
 
     IconButton(
         onClick = {

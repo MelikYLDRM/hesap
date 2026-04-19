@@ -13,6 +13,7 @@ import com.melikyldrm.hesap.speech.SpeechState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import timber.log.Timber
 import javax.inject.Inject
 
 @HiltViewModel
@@ -31,7 +32,7 @@ class BasicCalculatorViewModel @Inject constructor(
         // Speech command listener - her zaman başlat
         viewModelScope.launch {
             speechRecognitionManager.lastCommand.collect { command ->
-                android.util.Log.d("BasicCalcVM", "Received command from flow: $command")
+                Timber.d("Received command from flow: %s", command)
                 handleSpeechCommand(command)
             }
         }
@@ -42,30 +43,29 @@ class BasicCalculatorViewModel @Inject constructor(
     }
 
     fun onNumberClick(number: String) {
-        val currentState = _state.value
-        android.util.Log.d("BasicCalcVM", "onNumberClick: number='$number', isResultDisplayed=${currentState.isResultDisplayed}, expression='${currentState.expression}'")
+        Timber.d("onNumberClick: number='%s'", number)
 
-        if (currentState.isResultDisplayed) {
-            // Start new expression after result
-            android.util.Log.d("BasicCalcVM", "onNumberClick: Starting new expression with '$number'")
-            _state.value = currentState.copy(
-                expression = number,
-                previousExpression = "${currentState.expression} = ${currentState.result}",
-                isResultDisplayed = false,
-                isError = false
-            )
-        } else {
-            // Append to current expression
-            val newExpression = if (currentState.expression == "0") {
-                number
+        _state.update { currentState ->
+            if (currentState.isResultDisplayed) {
+                Timber.d("onNumberClick: Starting new expression with '%s'", number)
+                currentState.copy(
+                    expression = number,
+                    previousExpression = "${currentState.expression} = ${currentState.result}",
+                    isResultDisplayed = false,
+                    isError = false
+                )
             } else {
-                currentState.expression + number
+                val newExpression = if (currentState.expression == "0") {
+                    number
+                } else {
+                    currentState.expression + number
+                }
+                Timber.d("onNumberClick: Appending, new expression='%s'", newExpression)
+                currentState.copy(
+                    expression = newExpression,
+                    isError = false
+                )
             }
-            android.util.Log.d("BasicCalcVM", "onNumberClick: Appending, new expression='$newExpression'")
-            _state.value = currentState.copy(
-                expression = newExpression,
-                isError = false
-            )
         }
 
         // Calculate preview result
@@ -73,51 +73,23 @@ class BasicCalculatorViewModel @Inject constructor(
     }
 
     fun onOperatorClick(operator: String) {
-        val currentState = _state.value
-        android.util.Log.d("BasicCalcVM", "onOperatorClick: operator='$operator', isResultDisplayed=${currentState.isResultDisplayed}, expression='${currentState.expression}', result='${currentState.result}'")
+        _state.update { currentState ->
+            Timber.d("onOperatorClick: operator='%s', isResultDisplayed=%s", operator, currentState.isResultDisplayed)
 
-        val newExpression = if (currentState.isResultDisplayed) {
-            // Continue from result
-            android.util.Log.d("BasicCalcVM", "onOperatorClick: Continuing from result '${currentState.result}'")
-            currentState.result + operator
-        } else if (currentState.expression.isNotEmpty()) {
-            // Check if last char is operator and replace it
-            val lastChar = currentState.expression.lastOrNull()
-            if (lastChar != null && lastChar in "+-×÷") {
-                currentState.expression.dropLast(1) + operator
-            } else {
-                currentState.expression + operator
-            }
-        } else {
-            // Start with operator (use 0)
-            "0$operator"
-        }
-
-        android.util.Log.d("BasicCalcVM", "onOperatorClick: New expression='$newExpression', setting isResultDisplayed=false")
-        _state.value = currentState.copy(
-            expression = newExpression,
-            isResultDisplayed = false,
-            isError = false
-        )
-    }
-
-    fun onDecimalClick() {
-        val currentState = _state.value
-
-        // Find last number in expression
-        val lastNumber = currentState.expression.split(Regex("[+\\-×÷]")).lastOrNull() ?: ""
-
-        // Only add decimal if last number doesn't have one
-        if (!lastNumber.contains(".")) {
             val newExpression = if (currentState.isResultDisplayed) {
-                "0."
-            } else if (currentState.expression.isEmpty() || currentState.expression.last() in "+-×÷") {
-                currentState.expression + "0."
+                currentState.result + operator
+            } else if (currentState.expression.isNotEmpty()) {
+                val lastChar = currentState.expression.lastOrNull()
+                if (lastChar != null && lastChar in "+-×÷") {
+                    currentState.expression.dropLast(1) + operator
+                } else {
+                    currentState.expression + operator
+                }
             } else {
-                currentState.expression + "."
+                "0$operator"
             }
 
-            _state.value = currentState.copy(
+            currentState.copy(
                 expression = newExpression,
                 isResultDisplayed = false,
                 isError = false
@@ -125,155 +97,189 @@ class BasicCalculatorViewModel @Inject constructor(
         }
     }
 
+    fun onDecimalClick() {
+        _state.update { currentState ->
+            val lastNumber = currentState.expression.split(Regex("[+\\-×÷]")).lastOrNull() ?: ""
+
+            if (!lastNumber.contains(".")) {
+                val newExpression = if (currentState.isResultDisplayed) {
+                    "0."
+                } else if (currentState.expression.isEmpty() || currentState.expression.last() in "+-×÷") {
+                    currentState.expression + "0."
+                } else {
+                    currentState.expression + "."
+                }
+
+                currentState.copy(
+                    expression = newExpression,
+                    isResultDisplayed = false,
+                    isError = false
+                )
+            } else {
+                currentState // no change
+            }
+        }
+    }
+
     fun onEqualsClick() {
-        val currentState = _state.value
-        android.util.Log.d("BasicCalcVM", "onEqualsClick: expression='${currentState.expression}', result='${currentState.result}'")
+        val currentExpression = _state.value.expression
+        if (currentExpression.isEmpty()) return
 
-        if (currentState.expression.isEmpty()) return
-
-        // Convert display operators to calculation operators
-        val calcExpression = currentState.expression
+        val calcExpression = currentExpression
             .replace("×", "*")
             .replace("÷", "/")
 
         calculatorEngine.evaluate(calcExpression).fold(
             onSuccess = { result ->
                 val formattedResult = calculatorEngine.formatResult(result)
-                android.util.Log.d("BasicCalcVM", "onEqualsClick: Success, formattedResult='$formattedResult', setting isResultDisplayed=true")
+                Timber.d("onEqualsClick: Success, formattedResult='%s'", formattedResult)
 
-                _state.value = currentState.copy(
-                    result = formattedResult,
-                    previousExpression = currentState.expression,
-                    isResultDisplayed = true,
-                    isError = false
-                )
+                _state.update { currentState ->
+                    currentState.copy(
+                        result = formattedResult,
+                        previousExpression = currentState.expression,
+                        isResultDisplayed = true,
+                        isError = false
+                    )
+                }
 
-                // Save to history
-                saveToHistory(currentState.expression, formattedResult)
+                saveToHistory(currentExpression, formattedResult)
             },
             onFailure = { error ->
-                android.util.Log.e("BasicCalcVM", "onEqualsClick: Failed, error=${error.message}")
-                _state.value = currentState.copy(
-                    result = "Hata",
-                    isError = true,
-                    errorMessage = error.message
-                )
+                Timber.e("onEqualsClick: Failed, error=%s", error.message)
+                _state.update { currentState ->
+                    currentState.copy(
+                        result = "Hata",
+                        isError = true,
+                        errorMessage = error.message
+                    )
+                }
             }
         )
     }
 
     fun onClearClick() {
-        _state.value = CalculatorState()
+        _state.update { CalculatorState() }
     }
 
     fun onDeleteClick() {
-        val currentState = _state.value
-
-        if (currentState.isResultDisplayed) {
-            _state.value = CalculatorState()
-        } else if (currentState.expression.isNotEmpty()) {
-            val newExpression = currentState.expression.dropLast(1)
-            _state.value = currentState.copy(
-                expression = newExpression,
-                isError = false
-            )
-            calculatePreview()
+        _state.update { currentState ->
+            if (currentState.isResultDisplayed) {
+                CalculatorState()
+            } else if (currentState.expression.isNotEmpty()) {
+                currentState.copy(
+                    expression = currentState.expression.dropLast(1),
+                    isError = false
+                )
+            } else {
+                currentState
+            }
         }
+        calculatePreview()
     }
 
     fun onPercentClick() {
-        val currentState = _state.value
+        val currentExpression = _state.value.expression
+        if (currentExpression.isEmpty()) return
 
-        if (currentState.expression.isNotEmpty()) {
-            // Try to calculate percentage of the last number
-            val expression = currentState.expression
-                .replace("×", "*")
-                .replace("÷", "/")
+        val expression = currentExpression
+            .replace("×", "*")
+            .replace("÷", "/")
 
-            calculatorEngine.evaluate("($expression)/100").fold(
-                onSuccess = { result ->
-                    val formattedResult = calculatorEngine.formatResult(result)
-                    _state.value = currentState.copy(
+        calculatorEngine.evaluate("($expression)/100").fold(
+            onSuccess = { result ->
+                val formattedResult = calculatorEngine.formatResult(result)
+                _state.update { currentState ->
+                    currentState.copy(
                         expression = formattedResult,
                         result = formattedResult,
                         isResultDisplayed = true
                     )
-                },
-                onFailure = { /* Keep current state */ }
-            )
-        }
+                }
+            },
+            onFailure = { /* Keep current state */ }
+        )
     }
 
     fun onParenthesisClick(paren: String) {
-        val currentState = _state.value
+        _state.update { currentState ->
+            val newExpression = if (currentState.isResultDisplayed) {
+                paren
+            } else {
+                currentState.expression + paren
+            }
 
-        val newExpression = if (currentState.isResultDisplayed) {
-            paren
-        } else {
-            currentState.expression + paren
-        }
-
-        _state.value = currentState.copy(
-            expression = newExpression,
-            isResultDisplayed = false
-        )
-    }
-
-    fun onMemoryStore() {
-        val currentState = _state.value
-        val valueToStore = if (currentState.isResultDisplayed) {
-            currentState.result.toDoubleOrNull() ?: 0.0
-        } else {
-            val calcExpression = currentState.expression.replace("×", "*").replace("÷", "/")
-            calculatorEngine.evaluate(calcExpression).getOrNull() ?: 0.0
-        }
-
-        _state.value = currentState.copy(
-            memoryValue = valueToStore,
-            hasMemory = true
-        )
-    }
-
-    fun onMemoryRecall() {
-        val currentState = _state.value
-        if (currentState.hasMemory) {
-            val memoryString = calculatorEngine.formatResult(currentState.memoryValue)
-            _state.value = currentState.copy(
-                expression = if (currentState.isResultDisplayed) {
-                    memoryString
-                } else {
-                    currentState.expression + memoryString
-                },
+            currentState.copy(
+                expression = newExpression,
                 isResultDisplayed = false
             )
         }
     }
 
+    fun onMemoryStore() {
+        _state.update { currentState ->
+            val valueToStore = if (currentState.isResultDisplayed) {
+                currentState.result.toDoubleOrNull() ?: 0.0
+            } else {
+                val calcExpression = currentState.expression.replace("×", "*").replace("÷", "/")
+                calculatorEngine.evaluate(calcExpression).getOrNull() ?: 0.0
+            }
+
+            currentState.copy(
+                memoryValue = valueToStore,
+                hasMemory = true
+            )
+        }
+    }
+
+    fun onMemoryRecall() {
+        _state.update { currentState ->
+            if (currentState.hasMemory) {
+                val memoryString = calculatorEngine.formatResult(currentState.memoryValue)
+                currentState.copy(
+                    expression = if (currentState.isResultDisplayed) {
+                        memoryString
+                    } else {
+                        currentState.expression + memoryString
+                    },
+                    isResultDisplayed = false
+                )
+            } else {
+                currentState
+            }
+        }
+    }
+
     fun onMemoryClear() {
-        _state.value = _state.value.copy(
-            memoryValue = 0.0,
-            hasMemory = false
-        )
+        _state.update { it.copy(memoryValue = 0.0, hasMemory = false) }
     }
 
     fun onMemoryAdd() {
-        val currentState = _state.value
-        val valueToAdd = currentState.result.toDoubleOrNull() ?: return
-
-        _state.value = currentState.copy(
-            memoryValue = currentState.memoryValue + valueToAdd,
-            hasMemory = true
-        )
+        _state.update { currentState ->
+            val valueToAdd = currentState.result.toDoubleOrNull()
+            if (valueToAdd != null) {
+                currentState.copy(
+                    memoryValue = currentState.memoryValue + valueToAdd,
+                    hasMemory = true
+                )
+            } else {
+                currentState
+            }
+        }
     }
 
     fun onMemorySubtract() {
-        val currentState = _state.value
-        val valueToSubtract = currentState.result.toDoubleOrNull() ?: return
-
-        _state.value = currentState.copy(
-            memoryValue = currentState.memoryValue - valueToSubtract,
-            hasMemory = true
-        )
+        _state.update { currentState ->
+            val valueToSubtract = currentState.result.toDoubleOrNull()
+            if (valueToSubtract != null) {
+                currentState.copy(
+                    memoryValue = currentState.memoryValue - valueToSubtract,
+                    hasMemory = true
+                )
+            } else {
+                currentState
+            }
+        }
     }
 
     // Speech recognition functions - startListening is defined above with lazy init
@@ -287,44 +293,42 @@ class BasicCalculatorViewModel @Inject constructor(
     }
 
     private fun handleSpeechCommand(command: SpeechCommand) {
-        android.util.Log.d("BasicCalcVM", "handleSpeechCommand called with: $command")
+        Timber.d("handleSpeechCommand: %s", command)
         when (command) {
             is SpeechCommand.Calculate -> {
-                android.util.Log.d("BasicCalcVM", "Processing Calculate: ${command.expression}")
-
-                // Expression'ı direkt hesapla (display formatına çevirmeden)
+                Timber.d("Processing Calculate: %s", command.expression)
                 val calcExpression = command.expression
-                android.util.Log.d("BasicCalcVM", "Calculating expression: $calcExpression")
 
                 calculatorEngine.evaluate(calcExpression).fold(
                     onSuccess = { result ->
                         val formattedResult = calculatorEngine.formatResult(result)
                         val displayExpression = command.expression.replace("*", "×").replace("/", "÷")
 
-                        android.util.Log.d("BasicCalcVM", "Calculation success - result: $formattedResult")
+                        Timber.d("Calculation success - result: %s", formattedResult)
 
-                        _state.value = _state.value.copy(
-                            expression = displayExpression,
-                            result = formattedResult,
-                            previousExpression = displayExpression,
-                            isResultDisplayed = true,
-                            isError = false
-                        )
+                        _state.update {
+                            it.copy(
+                                expression = displayExpression,
+                                result = formattedResult,
+                                previousExpression = displayExpression,
+                                isResultDisplayed = true,
+                                isError = false
+                            )
+                        }
 
-                        // Save to history
                         saveToHistory(displayExpression, formattedResult)
-
-                        android.util.Log.d("BasicCalcVM", "State updated - expression: ${_state.value.expression}, result: ${_state.value.result}")
                     },
                     onFailure = { error ->
-                        android.util.Log.e("BasicCalcVM", "Calculation failed: ${error.message}")
+                        Timber.e("Calculation failed: %s", error.message)
                         val displayExpression = command.expression.replace("*", "×").replace("/", "÷")
-                        _state.value = _state.value.copy(
-                            expression = displayExpression,
-                            result = "Hata",
-                            isError = true,
-                            errorMessage = error.message
-                        )
+                        _state.update {
+                            it.copy(
+                                expression = displayExpression,
+                                result = "Hata",
+                                isError = true,
+                                errorMessage = error.message
+                            )
+                        }
                     }
                 )
             }
@@ -332,54 +336,47 @@ class BasicCalculatorViewModel @Inject constructor(
             is SpeechCommand.Delete -> onDeleteClick()
             is SpeechCommand.Equals -> onEqualsClick()
             is SpeechCommand.ContinueCalculation -> {
-                android.util.Log.d("BasicCalcVM", "Processing ContinueCalculation: ${command.operatorAndValue}")
+                Timber.d("Processing ContinueCalculation: %s", command.operatorAndValue)
 
-                val currentState = _state.value
-                android.util.Log.d("BasicCalcVM", "Current state - result: '${currentState.result}', expression: '${currentState.expression}', isResultDisplayed: ${currentState.isResultDisplayed}")
-
-                // Mevcut sonucu al (eğer sonuç gösteriliyorsa sonucu, değilse ifadeyi hesapla)
-                val currentResult = if (currentState.isResultDisplayed || currentState.result != "0") {
-                    // Sonuç zaten Locale.US formatında (nokta ondalık ayırıcı)
-                    currentState.result
-                } else {
-                    // Mevcut ifadeyi hesapla
-                    val calcExpr = currentState.expression.replace("×", "*").replace("÷", "/")
-                    calculatorEngine.evaluate(calcExpr).getOrNull()?.let {
-                        calculatorEngine.formatResult(it)
-                    } ?: "0"
+                val currentResult = _state.value.let { currentState ->
+                    if (currentState.isResultDisplayed || currentState.result != "0") {
+                        currentState.result
+                    } else {
+                        val calcExpr = currentState.expression.replace("×", "*").replace("÷", "/")
+                        calculatorEngine.evaluate(calcExpr).getOrNull()?.let {
+                            calculatorEngine.formatResult(it)
+                        } ?: "0"
+                    }
                 }
 
-                android.util.Log.d("BasicCalcVM", "Using currentResult: '$currentResult'")
-
-                // Mevcut sonuç + yeni işlem
                 val fullExpression = currentResult + command.operatorAndValue
-                android.util.Log.d("BasicCalcVM", "Full expression: $fullExpression")
 
                 calculatorEngine.evaluate(fullExpression).fold(
                     onSuccess = { result ->
                         val formattedResult = calculatorEngine.formatResult(result)
                         val displayExpression = fullExpression.replace("*", "×").replace("/", "÷")
 
-                        android.util.Log.d("BasicCalcVM", "Continue calculation success - result: $formattedResult")
+                        _state.update {
+                            it.copy(
+                                expression = displayExpression,
+                                result = formattedResult,
+                                previousExpression = displayExpression,
+                                isResultDisplayed = true,
+                                isError = false
+                            )
+                        }
 
-                        _state.value = _state.value.copy(
-                            expression = displayExpression,
-                            result = formattedResult,
-                            previousExpression = displayExpression,
-                            isResultDisplayed = true,
-                            isError = false
-                        )
-
-                        // Save to history
                         saveToHistory(displayExpression, formattedResult)
                     },
                     onFailure = { error ->
-                        android.util.Log.e("BasicCalcVM", "Continue calculation failed: ${error.message}")
-                        _state.value = _state.value.copy(
-                            result = "Hata",
-                            isError = true,
-                            errorMessage = error.message
-                        )
+                        Timber.e("Continue calculation failed: %s", error.message)
+                        _state.update {
+                            it.copy(
+                                result = "Hata",
+                                isError = true,
+                                errorMessage = error.message
+                            )
+                        }
                     }
                 )
             }
@@ -399,10 +396,12 @@ class BasicCalculatorViewModel @Inject constructor(
 
             calculatorEngine.evaluate(calcExpression).fold(
                 onSuccess = { result ->
-                    _state.value = currentState.copy(
-                        result = calculatorEngine.formatResult(result),
-                        isError = false
-                    )
+                    _state.update {
+                        it.copy(
+                            result = calculatorEngine.formatResult(result),
+                            isError = false
+                        )
+                    }
                 },
                 onFailure = { /* Keep previous result */ }
             )
@@ -422,10 +421,12 @@ class BasicCalculatorViewModel @Inject constructor(
     }
 
     fun loadExpression(expression: String) {
-        _state.value = _state.value.copy(
-            expression = expression,
-            isResultDisplayed = false
-        )
+        _state.update {
+            it.copy(
+                expression = expression,
+                isResultDisplayed = false
+            )
+        }
         calculatePreview()
     }
 
@@ -434,4 +435,3 @@ class BasicCalculatorViewModel @Inject constructor(
         speechRecognitionManager.destroy()
     }
 }
-

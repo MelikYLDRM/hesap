@@ -19,6 +19,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.melikyldrm.hesap.domain.model.*
 import java.util.Locale
+import kotlin.math.abs
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -75,6 +76,9 @@ fun FinanceScreen(
                     FinanceTab.TEVKIFAT -> TevkifatContent(state, viewModel)
                     FinanceTab.FAIZ -> FaizContent(state, viewModel)
                     FinanceTab.KAR_ZARAR -> KarZararContent(state, viewModel)
+                    FinanceTab.KREDI -> KrediContent(state, viewModel)
+                    FinanceTab.BMI -> BmiContent(state, viewModel)
+                    FinanceTab.BAHSIS -> BahsisContent(state, viewModel)
                 }
             }
         }
@@ -478,3 +482,203 @@ private fun ResultRow(
     }
 }
 
+// ========== KREDİ ==========
+@Composable
+private fun KrediContent(state: FinanceUiState, viewModel: FinanceViewModel) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState()),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        OutlinedTextField(
+            value = state.krediAmount,
+            onValueChange = viewModel::updateKrediAmount,
+            label = { Text("Kredi Tutarı (₺)") },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true
+        )
+        OutlinedTextField(
+            value = state.krediRate,
+            onValueChange = viewModel::updateKrediRate,
+            label = { Text("Yıllık Faiz Oranı (%)") },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true
+        )
+        OutlinedTextField(
+            value = state.krediMonths,
+            onValueChange = viewModel::updateKrediMonths,
+            label = { Text("Vade (Ay)") },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true
+        )
+
+        Button(onClick = viewModel::calculateKredi, modifier = Modifier.fillMaxWidth()) {
+            Text("Hesapla")
+        }
+
+        state.errorMessage?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+
+        state.krediResult?.let { result ->
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text("Kredi Özeti", style = MaterialTheme.typography.titleMedium)
+                    HorizontalDivider()
+                    ResultRow("Kredi Tutarı:", String.format(Locale.getDefault(), "%,.2f ₺", result.principal))
+                    ResultRow("Aylık Taksit:", String.format(Locale.getDefault(), "%,.2f ₺", result.monthlyPayment), highlight = true)
+                    ResultRow("Toplam Ödeme:", String.format(Locale.getDefault(), "%,.2f ₺", result.totalPayment))
+                    ResultRow("Toplam Faiz:", String.format(Locale.getDefault(), "%,.2f ₺", result.totalInterest))
+                }
+            }
+
+            if (result.schedule.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text("Ödeme Planı (ilk 6 ay)", style = MaterialTheme.typography.titleSmall)
+                result.schedule.take(6).forEach { item ->
+                    Card(modifier = Modifier.fillMaxWidth()) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth().padding(12.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text("${item.month}. Ay", style = MaterialTheme.typography.bodySmall)
+                            Text(
+                                String.format(Locale.getDefault(), "%,.2f ₺", item.payment),
+                                style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Medium
+                            )
+                            Text(
+                                "Kalan: ${String.format(Locale.getDefault(), "%,.0f ₺", item.remainingBalance)}",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+// ========== BMI ==========
+@Composable
+private fun BmiContent(state: FinanceUiState, viewModel: FinanceViewModel) {
+    Column(
+        modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        OutlinedTextField(
+            value = state.bmiWeight, onValueChange = viewModel::updateBmiWeight,
+            label = { Text("Kilo (kg)") },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+            modifier = Modifier.fillMaxWidth(), singleLine = true
+        )
+        OutlinedTextField(
+            value = state.bmiHeight, onValueChange = viewModel::updateBmiHeight,
+            label = { Text("Boy (cm)") },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+            modifier = Modifier.fillMaxWidth(), singleLine = true
+        )
+        Button(onClick = viewModel::calculateBmi, modifier = Modifier.fillMaxWidth()) {
+            Text("Hesapla")
+        }
+        state.errorMessage?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+        state.bmiResult?.let { result ->
+            val containerColor = when {
+                result.bmi < 18.5 -> MaterialTheme.colorScheme.tertiaryContainer
+                result.bmi < 25.0 -> MaterialTheme.colorScheme.primaryContainer
+                result.bmi < 30.0 -> MaterialTheme.colorScheme.secondaryContainer
+                else -> MaterialTheme.colorScheme.errorContainer
+            }
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = containerColor)
+            ) {
+                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(result.category, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                    HorizontalDivider()
+                    ResultRow("BMI Değeri:", String.format(Locale.getDefault(), "%.1f", result.bmi))
+                    ResultRow("Boy:", "${result.height.toInt()} cm")
+                    ResultRow("Kilo:", "${result.weight} kg")
+                    HorizontalDivider()
+                    ResultRow(
+                        "Sağlıklı Kilo Aralığı:",
+                        "${String.format(Locale.getDefault(), "%.1f", result.healthyWeightRange.first)} - ${String.format(Locale.getDefault(), "%.1f", result.healthyWeightRange.second)} kg"
+                    )
+                }
+            }
+        }
+    }
+}
+
+// ========== BAHŞİŞ ==========
+@Composable
+private fun BahsisContent(state: FinanceUiState, viewModel: FinanceViewModel) {
+    Column(
+        modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        OutlinedTextField(
+            value = state.tipBill, onValueChange = viewModel::updateTipBill,
+            label = { Text("Hesap Tutarı (₺)") },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+            modifier = Modifier.fillMaxWidth(), singleLine = true
+        )
+        Text("Bahşiş Oranı", style = MaterialTheme.typography.labelLarge)
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            listOf("10", "15", "20", "25").forEach { pct ->
+                FilterChip(
+                    selected = state.tipPercentage == pct,
+                    onClick = { viewModel.updateTipPercentage(pct) },
+                    label = { Text("%$pct") },
+                    modifier = Modifier.weight(1f)
+                )
+            }
+        }
+        OutlinedTextField(
+            value = state.tipPercentage, onValueChange = viewModel::updateTipPercentage,
+            label = { Text("Özel Oran (%)") },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+            modifier = Modifier.fillMaxWidth(), singleLine = true
+        )
+        OutlinedTextField(
+            value = state.tipPeople, onValueChange = viewModel::updateTipPeople,
+            label = { Text("Kişi Sayısı") },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            modifier = Modifier.fillMaxWidth(), singleLine = true
+        )
+        Button(onClick = viewModel::calculateTip, modifier = Modifier.fillMaxWidth()) {
+            Text("Hesapla")
+        }
+        state.errorMessage?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+        state.tipResult?.let { result ->
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+            ) {
+                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("Bahşiş Özeti", style = MaterialTheme.typography.titleMedium)
+                    HorizontalDivider()
+                    ResultRow("Hesap:", String.format(Locale.getDefault(), "%,.2f ₺", result.billAmount))
+                    ResultRow("Bahşiş (%${result.tipPercentage.toInt()}):", String.format(Locale.getDefault(), "%,.2f ₺", result.tipAmount))
+                    ResultRow("Toplam:", String.format(Locale.getDefault(), "%,.2f ₺", result.totalAmount))
+                    if (result.numberOfPeople > 1) {
+                        HorizontalDivider()
+                        ResultRow(
+                            "Kişi Başı (${result.numberOfPeople} kişi):",
+                            String.format(Locale.getDefault(), "%,.2f ₺", result.perPerson),
+                            highlight = true
+                        )
+                    }
+                }
+            }
+        }
+    }
+}

@@ -1,6 +1,9 @@
 package com.melikyldrm.hesap.ads
 
 import android.content.Context
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
@@ -21,7 +24,9 @@ import com.google.android.gms.ads.AdView
 import com.google.android.gms.ads.LoadAdError
 import com.google.android.gms.ads.MobileAds
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
+import timber.log.Timber
 
 /**
  * AdMob Banner Reklam Bileşeni
@@ -38,41 +43,40 @@ object AdConfig {
 
     /**
      * Build türüne göre uygun Ad Unit ID'yi döndürür
-     * Debug modda test reklamları, Release modda gerçek reklamlar
      */
     val BANNER_AD_UNIT_ID: String
         get() = if (com.melikyldrm.hesap.BuildConfig.DEBUG) {
-            android.util.Log.d("AdMob", "Using TEST Ad Unit ID")
+            Timber.d("Using TEST Ad Unit ID")
             TEST_BANNER_AD_UNIT_ID
         } else {
-            android.util.Log.d("AdMob", "Using PRODUCTION Ad Unit ID")
             PRODUCTION_BANNER_AD_UNIT_ID
         }
 
     // AdMob başlatıldı mı?
+    @Volatile
     private var isInitialized = false
 
     /**
-     * AdMob'u lazy olarak başlat - sadece reklam gösterilecekken çağrılır
+     * AdMob'u lazy olarak başlat - sadece reklam gösterilecekken çağrılır.
+     * MobileAds.initialize() Main thread'de çağrılmalı.
      */
     suspend fun initializeIfNeeded(context: Context) {
         if (!isInitialized) {
-            withContext(Dispatchers.IO) {
+            withContext(Dispatchers.Main) {
                 MobileAds.initialize(context) {
                     isInitialized = true
-                    android.util.Log.d("AdMob", "MobileAds initialized")
+                    Timber.d("MobileAds initialized")
                 }
             }
         }
     }
+
+    fun isReady() = isInitialized
 }
 
 /**
- * Banner reklam bileşeni
- *
- * @param modifier Modifier
- * @param onAdLoaded Reklam yüklendiğinde çağrılır
- * @param onAdFailed Reklam yüklenemediğinde çağrılır
+ * Banner reklam bileşeni - Adaptive sizing ile ekran genişliğine uyum sağlar.
+ * Reklam yüklenemezse alan gizlenir.
  */
 @Composable
 fun AdBanner(
@@ -82,78 +86,19 @@ fun AdBanner(
 ) {
     val context = LocalContext.current
     var isAdLoaded by remember { mutableStateOf(false) }
+    var isAdReady by remember { mutableStateOf(false) }
 
-    // AdMob'u lazy olarak başlat
+    // AdMob'u lazy olarak başlat - init bittikten sonra AdView oluştur
     LaunchedEffect(Unit) {
+        // İlk frame'lerin render edilmesini bekle, sonra AdMob'u başlat
+        delay(2000)
         AdConfig.initializeIfNeeded(context)
+        isAdReady = true
     }
 
-    // AdView'i hatırla ve temizle
-    val adView = remember {
-        AdView(context).apply {
-            setAdSize(AdSize.BANNER)
-            adUnitId = AdConfig.BANNER_AD_UNIT_ID
+    if (!isAdReady) return
 
-            adListener = object : AdListener() {
-                override fun onAdLoaded() {
-                    isAdLoaded = true
-                    onAdLoaded()
-                    android.util.Log.d("AdMob", "Banner ad loaded")
-                }
-
-                override fun onAdFailedToLoad(error: LoadAdError) {
-                    isAdLoaded = false
-                    onAdFailed(error.message)
-                    android.util.Log.e("AdMob", "Banner ad failed: ${error.message}")
-                }
-
-                override fun onAdClicked() {
-                    android.util.Log.d("AdMob", "Banner ad clicked")
-                }
-            }
-        }
-    }
-
-    // Reklam yükle
-    LaunchedEffect(adView) {
-        val adRequest = AdRequest.Builder().build()
-        adView.loadAd(adRequest)
-    }
-
-    // AdView'i temizle
-    DisposableEffect(adView) {
-        onDispose {
-            adView.destroy()
-        }
-    }
-
-    // Banner göster
-    AndroidView(
-        factory = { adView },
-        modifier = modifier
-            .fillMaxWidth()
-            .height(50.dp) // Banner yüksekliği
-    )
-}
-
-/**
- * Adaptive Banner - Ekran genişliğine göre otomatik boyutlandırılır
- */
-@Composable
-fun AdaptiveBanner(
-    modifier: Modifier = Modifier,
-    onAdLoaded: () -> Unit = {},
-    onAdFailed: (String) -> Unit = {}
-) {
-    val context = LocalContext.current
-    var isAdLoaded by remember { mutableStateOf(false) }
-
-    // AdMob'u lazy olarak başlat
-    LaunchedEffect(Unit) {
-        AdConfig.initializeIfNeeded(context)
-    }
-
-    // Ekran genişliğine göre AdSize hesapla
+    // Ekran genişliğine göre adaptive AdSize hesapla
     val adSize = remember {
         val displayMetrics = context.resources.displayMetrics
         val adWidthPixels = displayMetrics.widthPixels.toFloat()
@@ -162,6 +107,7 @@ fun AdaptiveBanner(
         AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(context, adWidth)
     }
 
+    // AdView'i hatırla ve temizle - sadece AdMob hazır olduktan sonra oluştur
     val adView = remember {
         AdView(context).apply {
             setAdSize(adSize)
@@ -171,30 +117,43 @@ fun AdaptiveBanner(
                 override fun onAdLoaded() {
                     isAdLoaded = true
                     onAdLoaded()
+                    Timber.d("Banner ad loaded")
                 }
 
                 override fun onAdFailedToLoad(error: LoadAdError) {
                     isAdLoaded = false
                     onAdFailed(error.message)
+                    Timber.e("Banner ad failed: %s", error.message)
+                }
+
+                override fun onAdClicked() {
+                    Timber.d("Banner ad clicked")
                 }
             }
+
+            // AdMob hazır, hemen yükle
+            loadAd(AdRequest.Builder().build())
         }
     }
 
-    LaunchedEffect(adView) {
-        val adRequest = AdRequest.Builder().build()
-        adView.loadAd(adRequest)
-    }
-
+    // AdView'i temizle
     DisposableEffect(adView) {
         onDispose {
             adView.destroy()
         }
     }
 
-    AndroidView(
-        factory = { adView },
-        modifier = modifier.fillMaxWidth()
-    )
+    // Tek bir AndroidView kullan - aynı adView'ı iki farklı yerde kullanmak crash'e neden olur
+    AnimatedVisibility(
+        visible = isAdLoaded,
+        enter = fadeIn() + expandVertically()
+    ) {
+        AndroidView(
+            factory = { adView },
+            modifier = modifier
+                .fillMaxWidth()
+                .height(adSize.height.dp)
+        )
+    }
 }
 

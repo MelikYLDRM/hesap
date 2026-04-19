@@ -33,48 +33,47 @@ class ScientificViewModel @Inject constructor(
     val speechState: StateFlow<SpeechState> = speechRecognitionManager.speechState
 
     fun onNumberClick(number: String) {
-        val currentState = _state.value
-
-        if (currentState.isResultDisplayed) {
-            _state.value = currentState.copy(
-                expression = number,
-                previousExpression = "${currentState.expression} = ${currentState.result}",
-                isResultDisplayed = false,
-                isError = false
-            )
-        } else {
-            val newExpression = if (currentState.expression == "0") number
-                               else currentState.expression + number
-            _state.value = currentState.copy(expression = newExpression, isError = false)
+        _state.update { currentState ->
+            if (currentState.isResultDisplayed) {
+                currentState.copy(
+                    expression = number,
+                    previousExpression = "${currentState.expression} = ${currentState.result}",
+                    isResultDisplayed = false,
+                    isError = false
+                )
+            } else {
+                val newExpression = if (currentState.expression == "0") number
+                                   else currentState.expression + number
+                currentState.copy(expression = newExpression, isError = false)
+            }
         }
         calculatePreview()
     }
 
     fun onOperatorClick(operator: String) {
-        val currentState = _state.value
-
-        val newExpression = if (currentState.isResultDisplayed) {
-            currentState.result + operator
-        } else if (currentState.expression.isNotEmpty()) {
-            val lastChar = currentState.expression.lastOrNull()
-            if (lastChar != null && lastChar in "+-×÷^") {
-                currentState.expression.dropLast(1) + operator
+        _state.update { currentState ->
+            val newExpression = if (currentState.isResultDisplayed) {
+                currentState.result + operator
+            } else if (currentState.expression.isNotEmpty()) {
+                val lastChar = currentState.expression.lastOrNull()
+                if (lastChar != null && lastChar in "+-×÷^") {
+                    currentState.expression.dropLast(1) + operator
+                } else {
+                    currentState.expression + operator
+                }
             } else {
-                currentState.expression + operator
+                "0$operator"
             }
-        } else {
-            "0$operator"
-        }
 
-        _state.value = currentState.copy(
-            expression = newExpression,
-            isResultDisplayed = false,
-            isError = false
-        )
+            currentState.copy(
+                expression = newExpression,
+                isResultDisplayed = false,
+                isError = false
+            )
+        }
     }
 
     fun onFunctionClick(function: String) {
-        val currentState = _state.value
         val isSecond = _isSecondFunction.value
 
         // Map function based on mode
@@ -89,114 +88,119 @@ class ScientificViewModel @Inject constructor(
             else -> function
         }
 
-        val newExpression = when (actualFunction) {
-            "^2", "^3", "!" -> {
-                if (currentState.isResultDisplayed) {
-                    currentState.result + actualFunction.replace("^", "")
-                } else {
-                    currentState.expression + actualFunction.replace("^", "")
+        _state.update { currentState ->
+            val newExpression = when (actualFunction) {
+                "^2", "^3", "!" -> {
+                    if (currentState.isResultDisplayed) {
+                        currentState.result + actualFunction.replace("^", "")
+                    } else {
+                        currentState.expression + actualFunction.replace("^", "")
+                    }
+                }
+                "10^" -> {
+                    if (currentState.isResultDisplayed) {
+                        "10^${currentState.result}"
+                    } else if (currentState.expression.isEmpty()) {
+                        "10^"
+                    } else {
+                        currentState.expression + "×10^"
+                    }
+                }
+                else -> {
+                    if (currentState.isResultDisplayed) {
+                        "$actualFunction(${currentState.result})"
+                    } else {
+                        currentState.expression + "$actualFunction("
+                    }
                 }
             }
-            "10^" -> {
-                if (currentState.isResultDisplayed) {
-                    "10^${currentState.result}"
-                } else if (currentState.expression.isEmpty()) {
-                    "10^"
-                } else {
-                    currentState.expression + "×10^"
-                }
-            }
-            else -> {
-                if (currentState.isResultDisplayed) {
-                    "$actualFunction(${currentState.result})"
-                } else {
-                    currentState.expression + "$actualFunction("
-                }
-            }
+
+            currentState.copy(
+                expression = newExpression,
+                isResultDisplayed = false
+            )
         }
 
-        _state.value = currentState.copy(
-            expression = newExpression,
-            isResultDisplayed = false
-        )
-
         // Reset second function mode after use
-        _isSecondFunction.value = false
+        _isSecondFunction.update { false }
     }
 
     fun onConstantClick(constant: String) {
-        val currentState = _state.value
-
         val value = when (constant) {
             "π" -> "3.14159265359"
             "e" -> "2.71828182846"
             else -> constant
         }
 
-        val newExpression = if (currentState.isResultDisplayed) {
-            value
-        } else if (currentState.expression.isEmpty() ||
-                   currentState.expression.last() in "+-×÷^(") {
-            currentState.expression + value
-        } else {
-            currentState.expression + "×$value"
-        }
-
-        _state.value = currentState.copy(
-            expression = newExpression,
-            isResultDisplayed = false
-        )
-    }
-
-    fun onParenthesisClick(paren: String) {
-        val currentState = _state.value
-
-        val newExpression = if (currentState.isResultDisplayed) {
-            paren
-        } else {
-            currentState.expression + paren
-        }
-
-        _state.value = currentState.copy(
-            expression = newExpression,
-            isResultDisplayed = false
-        )
-    }
-
-    fun toggleRadianMode() {
-        _isRadianMode.value = !_isRadianMode.value
-    }
-
-    fun toggleSecondFunction() {
-        _isSecondFunction.value = !_isSecondFunction.value
-    }
-
-    fun onDecimalClick() {
-        val currentState = _state.value
-        val lastNumber = currentState.expression.split(Regex("[+\\-×÷^(]")).lastOrNull() ?: ""
-
-        if (!lastNumber.contains(".")) {
+        _state.update { currentState ->
             val newExpression = if (currentState.isResultDisplayed) {
-                "0."
+                value
             } else if (currentState.expression.isEmpty() ||
                        currentState.expression.last() in "+-×÷^(") {
-                currentState.expression + "0."
+                currentState.expression + value
             } else {
-                currentState.expression + "."
+                currentState.expression + "×$value"
             }
 
-            _state.value = currentState.copy(
+            currentState.copy(
                 expression = newExpression,
                 isResultDisplayed = false
             )
         }
     }
 
-    fun onEqualsClick() {
-        val currentState = _state.value
-        if (currentState.expression.isEmpty()) return
+    fun onParenthesisClick(paren: String) {
+        _state.update { currentState ->
+            val newExpression = if (currentState.isResultDisplayed) {
+                paren
+            } else {
+                currentState.expression + paren
+            }
 
-        val calcExpression = currentState.expression
+            currentState.copy(
+                expression = newExpression,
+                isResultDisplayed = false
+            )
+        }
+    }
+
+    fun toggleRadianMode() {
+        _isRadianMode.update { !it }
+    }
+
+    fun toggleSecondFunction() {
+        _isSecondFunction.update { !it }
+    }
+
+    fun onDecimalClick() {
+        _state.update { currentState ->
+            val lastNumber = currentState.expression.split(Regex("[+\\-×÷^(]")).lastOrNull() ?: ""
+
+            if (!lastNumber.contains(".")) {
+                val newExpression = if (currentState.isResultDisplayed) {
+                    "0."
+                } else if (currentState.expression.isEmpty() ||
+                           currentState.expression.last() in "+-×÷^(") {
+                    currentState.expression + "0."
+                } else {
+                    currentState.expression + "."
+                }
+
+                currentState.copy(
+                    expression = newExpression,
+                    isResultDisplayed = false
+                )
+            } else {
+                currentState
+            }
+        }
+    }
+
+    fun onEqualsClick() {
+        val currentExpression = _state.value.expression
+        if (currentExpression.isEmpty()) return
+
+        val calcExpression = currentExpression
             .replace("×", "*")
             .replace("÷", "/")
             .replace("²", "^2")
@@ -206,39 +210,46 @@ class ScientificViewModel @Inject constructor(
         calculatorEngine.evaluate(calcExpression).fold(
             onSuccess = { result ->
                 val formattedResult = calculatorEngine.formatResult(result)
-                _state.value = currentState.copy(
-                    result = formattedResult,
-                    previousExpression = currentState.expression,
-                    isResultDisplayed = true,
-                    isError = false
-                )
-                saveToHistory(currentState.expression, formattedResult)
+                _state.update { currentState ->
+                    currentState.copy(
+                        result = formattedResult,
+                        previousExpression = currentState.expression,
+                        isResultDisplayed = true,
+                        isError = false
+                    )
+                }
+                saveToHistory(currentExpression, formattedResult)
             },
             onFailure = { error ->
-                _state.value = currentState.copy(
-                    result = "Hata",
-                    isError = true,
-                    errorMessage = error.message
-                )
+                _state.update { currentState ->
+                    currentState.copy(
+                        result = "Hata",
+                        isError = true,
+                        errorMessage = error.message
+                    )
+                }
             }
         )
     }
 
     fun onClearClick() {
-        _state.value = CalculatorState()
+        _state.update { CalculatorState() }
     }
 
     fun onDeleteClick() {
-        val currentState = _state.value
-        if (currentState.isResultDisplayed) {
-            _state.value = CalculatorState()
-        } else if (currentState.expression.isNotEmpty()) {
-            _state.value = currentState.copy(
-                expression = currentState.expression.dropLast(1),
-                isError = false
-            )
-            calculatePreview()
+        _state.update { currentState ->
+            if (currentState.isResultDisplayed) {
+                CalculatorState()
+            } else if (currentState.expression.isNotEmpty()) {
+                currentState.copy(
+                    expression = currentState.expression.dropLast(1),
+                    isError = false
+                )
+            } else {
+                currentState
+            }
         }
+        calculatePreview()
     }
 
     private fun calculatePreview() {
@@ -254,10 +265,12 @@ class ScientificViewModel @Inject constructor(
 
             calculatorEngine.evaluate(calcExpression).fold(
                 onSuccess = { result ->
-                    _state.value = currentState.copy(
-                        result = calculatorEngine.formatResult(result),
-                        isError = false
-                    )
+                    _state.update {
+                        it.copy(
+                            result = calculatorEngine.formatResult(result),
+                            isError = false
+                        )
+                    }
                 },
                 onFailure = { }
             )
@@ -281,4 +294,3 @@ class ScientificViewModel @Inject constructor(
     fun stopListening() = speechRecognitionManager.stopListening()
     fun resetSpeechState() = speechRecognitionManager.resetState()
 }
-

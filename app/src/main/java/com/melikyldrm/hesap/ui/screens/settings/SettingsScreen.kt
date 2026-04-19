@@ -1,5 +1,7 @@
 package com.melikyldrm.hesap.ui.screens.settings
 
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -13,9 +15,12 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.melikyldrm.hesap.BuildConfig
 import com.melikyldrm.hesap.data.local.ThemeMode
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -26,6 +31,8 @@ fun SettingsScreen(
 ) {
     val themeSettings by viewModel.themeSettings.collectAsStateWithLifecycle()
     var showThemeDialog by remember { mutableStateOf(false) }
+    var showAboutDialog by remember { mutableStateOf(false) }
+    val context = LocalContext.current
 
     Scaffold(
         topBar = {
@@ -66,6 +73,8 @@ fun SettingsScreen(
                     onClick = { showThemeDialog = true }
                 )
 
+                HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+
                 // Dinamik Renkler (Android 12+)
                 SettingsItemWithSwitch(
                     icon = Icons.Default.ColorLens,
@@ -76,15 +85,60 @@ fun SettingsScreen(
                 )
             }
 
-            // Genel Bölümü
-            SettingsSection(title = "Genel") {
+            // Geri Bildirim Bölümü
+            SettingsSection(title = "Geri Bildirim") {
                 SettingsItem(
-                    icon = Icons.Default.Info,
-                    title = "Hakkında",
-                    subtitle = "Hesap Makinesi v1.0",
-                    onClick = { /* Hakkında dialog */ }
+                    icon = Icons.Default.Star,
+                    title = "Uygulamayı değerlendirin",
+                    subtitle = "Google Play Store'da puanlayın",
+                    onClick = {
+                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(
+                            "https://play.google.com/store/apps/details?id=${BuildConfig.APPLICATION_ID}"
+                        ))
+                        context.startActivity(intent)
+                    }
+                )
+
+                HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+
+                SettingsItem(
+                    icon = Icons.Default.BugReport,
+                    title = "Hata bildir",
+                    subtitle = "GitHub üzerinden sorun bildirin",
+                    onClick = {
+                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(
+                            "https://github.com/MelikYLDRM/hesap/issues"
+                        ))
+                        context.startActivity(intent)
+                    }
                 )
             }
+
+            // Hakkında Bölümü
+            SettingsSection(title = "Hakkında") {
+                SettingsItem(
+                    icon = Icons.Default.Info,
+                    title = "Hesap",
+                    subtitle = "v${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
+                    onClick = { showAboutDialog = true }
+                )
+
+                HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+
+                SettingsItem(
+                    icon = Icons.Default.PrivacyTip,
+                    title = "Gizlilik politikası",
+                    subtitle = "Verilerinizi nasıl koruduğumuzu öğrenin",
+                    onClick = {
+                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(
+                            "https://melikyldrm.github.io/hesap/privacy-policy.html"
+                        ))
+                        context.startActivity(intent)
+                    }
+                )
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
         }
     }
 
@@ -124,6 +178,49 @@ fun SettingsScreen(
             confirmButton = {
                 TextButton(onClick = { showThemeDialog = false }) {
                     Text("İptal")
+                }
+            }
+        )
+    }
+
+    // Hakkında dialogu
+    if (showAboutDialog) {
+        AlertDialog(
+            onDismissRequest = { showAboutDialog = false },
+            icon = { Icon(Icons.Default.Calculate, contentDescription = null) },
+            title = {
+                Text(
+                    text = "Hesap",
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            text = {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        text = "Türkçe Sesli Hesap Makinesi",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "Sürüm ${BuildConfig.VERSION_NAME}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = "© 2026 Melik Yıldırım",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showAboutDialog = false }) {
+                    Text("Tamam")
                 }
             }
         )

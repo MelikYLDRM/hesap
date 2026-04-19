@@ -6,6 +6,7 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt)
+    alias(libs.plugins.detekt)
 }
 
 // Keystore properties
@@ -23,8 +24,8 @@ android {
         applicationId = "com.melikyldrm.hesap"
         minSdk = 26
         targetSdk = 36
-        versionCode = 5
-        versionName = "1.0.4"
+        versionCode = 6
+        versionName = "1.0.5"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -96,6 +97,12 @@ kotlin {
     jvmToolchain(17)
 }
 
+detekt {
+    config.setFrom(files("$rootDir/config/detekt/detekt.yml"))
+    buildUponDefaultConfig = true
+    allRules = false
+}
+
 dependencies {
     // Core
     implementation(libs.androidx.core.ktx)
@@ -159,6 +166,10 @@ dependencies {
     implementation(libs.androidx.startup.runtime)
     implementation(libs.androidx.tracing)
     implementation(libs.androidx.profileinstaller)
+
+
+    // Timber Logging
+    implementation(libs.timber)
 
     // Google Mobile Ads (AdMob) - Lazy loading ile yüklenir
     implementation(libs.play.services.ads)

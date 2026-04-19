@@ -15,23 +15,32 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.compose.rememberNavController
 import com.melikyldrm.hesap.data.local.ThemeMode
+import com.melikyldrm.hesap.data.local.ThemePreferences
 import com.melikyldrm.hesap.ui.navigation.BottomNavigationBar
 import com.melikyldrm.hesap.ads.AdBanner
 import com.melikyldrm.hesap.ui.navigation.CalculatorNavHost
 import com.melikyldrm.hesap.ui.navigation.Screen
+import com.melikyldrm.hesap.ui.screens.onboarding.OnboardingScreen
 import com.melikyldrm.hesap.ui.screens.settings.SettingsViewModel
 import com.melikyldrm.hesap.ui.theme.HesapTheme
 import com.melikyldrm.hesap.update.InAppUpdateManager
 import com.melikyldrm.hesap.update.UpdateState
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import timber.log.Timber
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
     private val settingsViewModel: SettingsViewModel by viewModels()
+
+    @Inject
+    lateinit var themePreferences: ThemePreferences
 
     // In-App Update Manager
     private lateinit var inAppUpdateManager: InAppUpdateManager
@@ -44,8 +53,11 @@ class MainActivity : ComponentActivity() {
         // In-App Update Manager'ı başlat
         inAppUpdateManager = InAppUpdateManager(this)
 
-        // Güncelleme kontrolü yap
-        inAppUpdateManager.checkForUpdates()
+        // Güncelleme kontrolünü ilk frame renderlandıktan sonra yap (startup performansı için)
+        lifecycleScope.launch {
+            delay(5000) // İlk UI render'ı ve AdMob init'i tamamlansın
+            inAppUpdateManager.checkForUpdates()
+        }
 
         setContent {
             val themeSettings by settingsViewModel.themeSettings.collectAsState()
@@ -57,7 +69,6 @@ class MainActivity : ComponentActivity() {
             LaunchedEffect(updateState) {
                 when (updateState) {
                     is UpdateState.Downloaded -> {
-                        // Güncelleme indirildi, kullanıcıya bildir
                         Toast.makeText(
                             this@MainActivity,
                             "Güncelleme indirildi! Yüklemek için uygulamayı yeniden başlatın.",
@@ -65,8 +76,7 @@ class MainActivity : ComponentActivity() {
                         ).show()
                     }
                     is UpdateState.Failed -> {
-                        // Güncelleme başarısız oldu
-                        android.util.Log.e("InAppUpdate", (updateState as UpdateState.Failed).message)
+                        Timber.e("InAppUpdate: %s", (updateState as UpdateState.Failed).message)
                     }
                     else -> {}
                 }
@@ -94,25 +104,15 @@ class MainActivity : ComponentActivity() {
                 darkTheme = isDarkTheme,
                 dynamicColor = themeSettings.dynamicColors
             ) {
-                // İlk frame'de basit bir placeholder göster, sonra asıl UI'ı yükle
-                var isReady by remember { mutableStateOf(false) }
-
-                LaunchedEffect(Unit) {
-                    // Sistem hazır olana kadar bekle, sonra UI'ı yükle
-                    delay(100)
-                    isReady = true
-                }
-
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    if (isReady) {
-                        MainScreen(
-                            onCompleteUpdate = { inAppUpdateManager.completeUpdate() },
-                            updateState = updateState
-                        )
-                    }
+                    MainScreen(
+                        onCompleteUpdate = { inAppUpdateManager.completeUpdate() },
+                        updateState = updateState,
+                        themePreferences = themePreferences
+                    )
                 }
             }
         }
@@ -120,7 +120,6 @@ class MainActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
-        // Devam eden güncellemeyi kontrol et
         if (::inAppUpdateManager.isInitialized) {
             inAppUpdateManager.onResume()
         }
@@ -128,7 +127,6 @@ class MainActivity : ComponentActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
-        // Kaynakları temizle
         if (::inAppUpdateManager.isInitialized) {
             inAppUpdateManager.onDestroy()
         }
@@ -138,8 +136,25 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun MainScreen(
     onCompleteUpdate: () -> Unit = {},
-    updateState: UpdateState = UpdateState.Idle
+    updateState: UpdateState = UpdateState.Idle,
+    themePreferences: ThemePreferences? = null
 ) {
+    // Onboarding state
+    val hasSeenOnboarding by (themePreferences?.hasSeenOnboarding
+        ?: kotlinx.coroutines.flow.flowOf(true)).collectAsState(initial = true)
+    val scope = rememberCoroutineScope()
+
+    if (!hasSeenOnboarding) {
+        OnboardingScreen(
+            onComplete = {
+                scope.launch {
+                    themePreferences?.setOnboardingCompleted()
+                }
+            }
+        )
+        return
+    }
+
     val navController = rememberNavController()
     val configuration = LocalConfiguration.current
     val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
@@ -171,8 +186,11 @@ fun MainScreen(
             Column {
                 BottomNavigationBar(navController = navController)
                 // Yatay modda reklam gizlenir - yer kalmaz
+                // key ile stabilize et - tab geçişlerinde yeniden oluşturulmasını engelle
                 if (!isLandscape) {
-                    AdBanner()
+                    key("ad_banner") {
+                        AdBanner()
+                    }
                 }
             }
         }

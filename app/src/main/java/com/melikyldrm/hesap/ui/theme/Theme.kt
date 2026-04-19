@@ -132,12 +132,12 @@ fun HesapTheme(
     val view = LocalView.current
 
     if (!view.isInEditMode) {
-        // Modern edge-to-edge yaklaşımı - deprecated API'ler kullanılmıyor
-        androidx.compose.runtime.LaunchedEffect(darkTheme) {
+        // SideEffect - LaunchedEffect'ten daha hafif (coroutine overhead yok)
+        androidx.compose.runtime.SideEffect {
             val window = (view.context as Activity).window
-            // Status bar içeriğinin rengini ayarla (ikon ve yazılar)
-            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !darkTheme
-            WindowCompat.getInsetsController(window, view).isAppearanceLightNavigationBars = !darkTheme
+            val controller = WindowCompat.getInsetsController(window, view)
+            controller.isAppearanceLightStatusBars = !darkTheme
+            controller.isAppearanceLightNavigationBars = !darkTheme
         }
     }
 

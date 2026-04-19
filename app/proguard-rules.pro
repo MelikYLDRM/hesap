@@ -82,6 +82,14 @@
 # ==================== exp4j Expression Parser ====================
 -keep class net.objecthunter.exp4j.** { *; }
 
+# ==================== Timber Logging ====================
+# Strip debug logging in release builds
+-assumenosideeffects class timber.log.Timber {
+    public static *** d(...);
+    public static *** v(...);
+    public static *** i(...);
+}
+
 # ==================== Startup Optimization ====================
 # Aggressive optimization for faster startup
 -optimizationpasses 5

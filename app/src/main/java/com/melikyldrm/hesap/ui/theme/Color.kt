@@ -28,10 +28,10 @@ val OnBackgroundLight = Color(0xFF1C1B1F)
 val OnSurfaceLight = Color(0xFF1C1B1F)
 val OnSurfaceVariantLight = Color(0xFF49454F)
 
-// Background & Surface - Dark
-val BackgroundDark = Color(0xFF121212)
-val SurfaceDark = Color(0xFF1E1E1E)
-val SurfaceVariantDark = Color(0xFF2D2D2D)
+// Background & Surface - Dark (deeper, more AMOLED friendly)
+val BackgroundDark = Color(0xFF0A0A0A)
+val SurfaceDark = Color(0xFF1A1A1A)
+val SurfaceVariantDark = Color(0xFF2A2A2A)
 val OnBackgroundDark = Color(0xFFE6E1E5)
 val OnSurfaceDark = Color(0xFFE6E1E5)
 val OnSurfaceVariantDark = Color(0xFFCAC4D0)
@@ -49,29 +49,29 @@ val ClearButtonLight = Color(0xFFFFEBEE)
 val ClearButtonTextLight = Color(0xFFD32F2F)
 
 // Calculator Button Colors - Dark - Modern & Distinct (Pastel Xiaomi Style)
-val NumberButtonDark = Color(0xFF2D2D2D) // Koyu gri (Xiaomi tarzı sayı tuşları)
-val NumberButtonTextDark = Color(0xFFFFFFFF) 
+val NumberButtonDark = Color(0xFF252525) // Daha derin koyu gri
+val NumberButtonTextDark = Color(0xFFF5F5F5)
 
 val OperatorButtonDark = Color(0xFFFFCC80) // Pastel Turuncu
 val OperatorButtonTextDark = Color(0xFF3E2723) 
 
-val FunctionButtonDark = Color(0xFFCFD8DC) // Pastel Gri-Mavi (Üst fonksiyon tuşları)
-val FunctionButtonTextDark = Color(0xFF263238)
+val FunctionButtonDark = Color(0xFFB0BEC5) // Biraz daha belirgin gri-mavi
+val FunctionButtonTextDark = Color(0xFF1A2327)
 
-val EqualsButtonDark = Color(0xFFFFB74D) // Biraz daha belirgin Pastel Turuncu
+val EqualsButtonDark = Color(0xFFFFB74D) // Belirgin Pastel Turuncu
 val EqualsButtonTextDark = Color(0xFF3E2723)
 
-val ClearButtonDark = Color(0xFFFFAB91) // Pastel Kırmızımsı (C/AC için)
-val ClearButtonTextDark = Color(0xFFBF360C)
+val ClearButtonDark = Color(0xFFEF9A9A) // Pastel Kırmızı
+val ClearButtonTextDark = Color(0xFFB71C1C)
 
 // Display Colors
 val DisplayBackgroundLight = Color(0xFFE8EAF6)
 val DisplayTextLight = Color(0xFF212121)
 val DisplaySecondaryTextLight = Color(0xFF757575)
 
-val DisplayBackgroundDark = Color(0xFF1A1A2E)
-val DisplayTextDark = Color(0xFFE6E1E5)
-val DisplaySecondaryTextDark = Color(0xFF9E9E9E)
+val DisplayBackgroundDark = Color(0xFF111122)
+val DisplayTextDark = Color(0xFFF0F0F0)
+val DisplaySecondaryTextDark = Color(0xFFAAAAAA)
 
 // Status Colors
 val Success = Color(0xFF4CAF50)

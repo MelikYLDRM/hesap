@@ -11,11 +11,18 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import android.content.Intent
+import android.widget.Toast
+import androidx.core.content.FileProvider
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.melikyldrm.hesap.domain.model.CalculationHistory
 import com.melikyldrm.hesap.ui.components.HistoryList
+import java.io.File
+import java.text.SimpleDateFormat
+import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -27,6 +34,7 @@ fun HistoryScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     var showClearDialog by remember { mutableStateOf(false) }
     var showSearchBar by remember { mutableStateOf(false) }
+    val context = LocalContext.current
 
     Scaffold(
         topBar = {
@@ -50,6 +58,14 @@ fun HistoryScreen(
                     actions = {
                         IconButton(onClick = { showSearchBar = true }) {
                             Icon(Icons.Default.Search, contentDescription = "Ara")
+                        }
+                        IconButton(
+                            onClick = {
+                                exportHistoryToCsv(context, state.filteredHistory)
+                            },
+                            enabled = state.filteredHistory.isNotEmpty()
+                        ) {
+                            Icon(Icons.Default.FileDownload, contentDescription = "CSV Dışa Aktar")
                         }
                         IconButton(onClick = { showClearDialog = true }) {
                             Icon(Icons.Default.DeleteSweep, contentDescription = "Temizle")
@@ -175,5 +191,35 @@ private fun SearchBar(
         },
         windowInsets = WindowInsets(0.dp)
     )
+}
+
+private fun exportHistoryToCsv(context: android.content.Context, history: List<CalculationHistory>) {
+    try {
+        val dateFormat = SimpleDateFormat("dd.MM.yyyy HH:mm", Locale("tr"))
+        val csv = buildString {
+            appendLine("Tarih,İfade,Sonuç,Tür,Favori")
+            history.forEach { item ->
+                val date = dateFormat.format(Date(item.timestamp))
+                val expr = item.expression.replace(",", ";")
+                val result = item.result.replace(",", ";")
+                appendLine("$date,$expr,$result,${item.type.name},${if (item.isFavorite) "Evet" else "Hayır"}")
+            }
+        }
+
+        val fileName = "hesap_gecmisi_${SimpleDateFormat("yyyyMMdd_HHmm", Locale.US).format(Date())}.csv"
+        val file = File(context.cacheDir, fileName)
+        file.writeText(csv)
+
+        val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
+        val intent = Intent(Intent.ACTION_SEND).apply {
+            type = "text/csv"
+            putExtra(Intent.EXTRA_STREAM, uri)
+            putExtra(Intent.EXTRA_SUBJECT, "Hesap Makinesi Geçmişi")
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
+        context.startActivity(Intent.createChooser(intent, "Geçmişi Dışa Aktar"))
+    } catch (e: Exception) {
+        Toast.makeText(context, "Dışa aktarma başarısız: ${e.message}", Toast.LENGTH_SHORT).show()
+    }
 }
 

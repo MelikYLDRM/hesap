@@ -10,6 +10,82 @@
     <string name="widget_calculator_name">Hesap Makinesi</string>
     <string name="widget_quick_access_name">Hızlı Hesapla</string>
 
+    <!-- Navigation -->
+    <string name="nav_basic">Temel</string>
+    <string name="nav_scientific">Bilimsel</string>
+    <string name="nav_finance">Finans</string>
+    <string name="nav_converter">Birim</string>
+    <string name="nav_exchange">Döviz</string>
+
+    <!-- Screen Titles -->
+    <string name="title_calculator">Hesap Makinesi</string>
+    <string name="title_scientific">Bilimsel Hesap Makinesi</string>
+    <string name="title_finance">Finansal Hesaplamalar</string>
+    <string name="title_converter">Birim Dönüştürücü</string>
+    <string name="title_exchange">Döviz Çevirici</string>
+    <string name="title_history">Hesaplama Geçmişi</string>
+    <string name="title_settings">Ayarlar</string>
+
+    <!-- Actions -->
+    <string name="action_copy">Kopyala</string>
+    <string name="action_share">Paylaş</string>
+    <string name="action_refresh">Yenile</string>
+    <string name="action_clear">Temizle</string>
+    <string name="action_delete">Sil</string>
+    <string name="action_cancel">İptal</string>
+    <string name="action_ok">Tamam</string>
+    <string name="action_back">Geri</string>
+    <string name="action_search">Ara</string>
+    <string name="action_install">Yükle</string>
+
+    <!-- Calculator -->
+    <string name="result_copied">Kopyalandı</string>
+    <string name="share_result_title">Sonucu Paylaş</string>
+    <string name="result_error">Hata</string>
+
+    <!-- Speech -->
+    <string name="speech_listening">Dinleniyor…</string>
+    <string name="speech_processing">İşleniyor…</string>
+    <string name="speech_not_recognized">Ses tanınamadı</string>
+    <string name="speech_permission_required">Mikrofon izni gerekli</string>
+    <string name="speech_not_available">Ses tanıma kullanılamıyor</string>
+
+    <!-- Settings -->
+    <string name="settings_appearance">Görünüm</string>
+    <string name="settings_theme">Tema</string>
+    <string name="settings_theme_system">Sistem varsayılanı</string>
+    <string name="settings_theme_light">Açık tema</string>
+    <string name="settings_theme_dark">Koyu tema</string>
+    <string name="settings_dynamic_colors">Dinamik renkler</string>
+    <string name="settings_dynamic_colors_desc">Duvar kağıdınıza göre renkleri ayarlayın</string>
+    <string name="settings_feedback">Geri Bildirim</string>
+    <string name="settings_rate">Uygulamayı değerlendirin</string>
+    <string name="settings_rate_desc">Google Play Store\'da puanlayın</string>
+    <string name="settings_report_bug">Hata bildir</string>
+    <string name="settings_report_bug_desc">GitHub üzerinden sorun bildirin</string>
+    <string name="settings_about">Hakkında</string>
+    <string name="settings_privacy">Gizlilik politikası</string>
+    <string name="settings_privacy_desc">Verilerinizi nasıl koruduğumuzu öğrenin</string>
+
+    <!-- History -->
+    <string name="history_empty_title">Henüz hesaplama yok</string>
+    <string name="history_empty_desc">Yaptığınız hesaplamalar burada görünecek</string>
+    <string name="history_clear_title">Geçmişi Temizle</string>
+    <string name="history_clear_message">Tüm hesaplama geçmişini silmek istediğinizden emin misiniz?</string>
+    <string name="history_clear_all">Tümünü Sil</string>
+    <string name="history_clear_except_favorites">Favoriler Hariç Sil</string>
+
+    <!-- Exchange -->
+    <string name="exchange_source">Kaynak Para Birimi</string>
+    <string name="exchange_target">Hedef Para Birimi</string>
+    <string name="exchange_amount">Tutar</string>
+    <string name="exchange_result">Sonuç</string>
+    <string name="exchange_rates_title">Güncel Kurlar (TRY)</string>
+
+    <!-- Update -->
+    <string name="update_downloaded">Güncelleme indirildi! Yüklemek için uygulamayı yeniden başlatın.</string>
+    <string name="update_ready">Güncelleme hazır!</string>
+
     <!-- Accessibility -->
     <string name="cd_microphone">Sesli giriş</string>
     <string name="cd_clear">Temizle</string>
@@ -17,10 +93,18 @@
     <string name="cd_equals">Eşittir</string>
     <string name="cd_history">Geçmiş</string>
     <string name="cd_settings">Ayarlar</string>
+    <string name="cd_swap_currencies">Para birimlerini değiştir</string>
+    <string name="cd_stop_listening">Dinlemeyi durdur</string>
+    <string name="cd_voice_command">Sesli komut</string>
+    <string name="cd_toggle_favorite">Favorilere ekle/çıkar</string>
 
     <!-- Error Messages -->
     <string name="error_calculation">Hesaplama hatası</string>
     <string name="error_invalid_input">Geçersiz giriş</string>
     <string name="error_network">İnternet bağlantısı yok</string>
     <string name="error_exchange_rate">Döviz kurları yüklenemedi</string>
+
+    <!-- About Dialog -->
+    <string name="about_subtitle">Türkçe Sesli Hesap Makinesi</string>
+    <string name="about_copyright">© 2026 Melik Yıldırım</string>
 </resources>

@@ -32,6 +32,7 @@ class ThemePreferences @Inject constructor(
     private object PreferencesKeys {
         val THEME_MODE = stringPreferencesKey("theme_mode")
         val DYNAMIC_COLORS = booleanPreferencesKey("dynamic_colors")
+        val HAS_SEEN_ONBOARDING = booleanPreferencesKey("has_seen_onboarding")
     }
 
     val themeSettings: Flow<ThemeSettings> = dataStore.data.map { preferences ->
@@ -52,6 +53,16 @@ class ThemePreferences @Inject constructor(
     suspend fun setDynamicColors(enabled: Boolean) {
         dataStore.edit { preferences ->
             preferences[PreferencesKeys.DYNAMIC_COLORS] = enabled
+        }
+    }
+
+    val hasSeenOnboarding: Flow<Boolean> = dataStore.data.map { preferences ->
+        preferences[PreferencesKeys.HAS_SEEN_ONBOARDING] ?: false
+    }
+
+    suspend fun setOnboardingCompleted() {
+        dataStore.edit { preferences ->
+            preferences[PreferencesKeys.HAS_SEEN_ONBOARDING] = true
         }
     }
 }

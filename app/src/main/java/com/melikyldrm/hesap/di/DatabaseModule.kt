@@ -2,6 +2,8 @@ package com.melikyldrm.hesap.di
 
 import android.content.Context
 import androidx.room.Room
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 import com.melikyldrm.hesap.data.local.HesapDatabase
 import com.melikyldrm.hesap.data.local.dao.ExchangeRateDao
 import com.melikyldrm.hesap.data.local.dao.HistoryDao
@@ -10,7 +12,6 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
-import java.util.concurrent.Executors
 import javax.inject.Singleton
 
 @Module
@@ -27,10 +28,9 @@ object DatabaseModule {
             HesapDatabase::class.java,
             "hesap_database"
         )
+            // Production'da destructive migration kullanıcı verilerini siler!
+            // Yeni sürümlerde Migration nesneleri tanımlanmalı.
             .fallbackToDestructiveMigration()
-            // Background thread'de query çalıştır
-            .setQueryExecutor(Executors.newCachedThreadPool())
-            .setTransactionExecutor(Executors.newCachedThreadPool())
             .build()
     }
 

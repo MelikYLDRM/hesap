@@ -6,7 +6,6 @@ import android.os.Bundle
 import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
-import android.util.Log
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -14,10 +13,10 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import timber.log.Timber
 import javax.inject.Inject
 import javax.inject.Singleton
 
-private const val TAG = "SpeechRecognition"
 
 @Singleton
 class SpeechRecognitionManager @Inject constructor(
@@ -156,10 +155,7 @@ class SpeechRecognitionManager @Inject constructor(
                 val matches = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
                 val spokenText = matches?.firstOrNull() ?: ""
 
-                // Debug logging
-                Log.d(TAG, "=== SPEECH RESULTS ===")
-                Log.d(TAG, "Raw results: $matches")
-                Log.d(TAG, "Selected text: '$spokenText'")
+                Timber.d("Speech results - Raw: %s, Selected: '%s'", matches, spokenText)
 
                 if (spokenText.isNotEmpty()) {
                     processSpokenText(spokenText)
@@ -188,26 +184,17 @@ class SpeechRecognitionManager @Inject constructor(
     }
 
     private fun processSpokenText(text: String) {
-        Log.d(TAG, "=== PROCESSING ===")
-        Log.d(TAG, "Input text: '$text'")
+        Timber.d("Processing speech: '%s'", text)
 
-        // parseCommand içinde parseExpression zaten çağrılıyor - tekrar çağırmaya gerek yok
         val command = commandParser.parseCommand(text)
-        Log.d(TAG, "parseCommand result: $command")
+        Timber.d("Parsed command: %s", command)
 
-        // SharedFlow ile komutu emit et
         val emitted = _lastCommand.tryEmit(command)
-        Log.d(TAG, "Command emitted: $emitted")
+        Timber.d("Command emitted: %s", emitted)
 
         val parsedExpression = when (command) {
-            is SpeechCommand.Calculate -> {
-                Log.d(TAG, "Calculate command with expression: '${command.expression}'")
-                command.expression
-            }
-            is SpeechCommand.ContinueCalculation -> {
-                Log.d(TAG, "ContinueCalculation command with operatorAndValue: '${command.operatorAndValue}'")
-                command.operatorAndValue
-            }
+            is SpeechCommand.Calculate -> command.expression
+            is SpeechCommand.ContinueCalculation -> command.operatorAndValue
             is SpeechCommand.Clear -> null
             is SpeechCommand.Delete -> null
             is SpeechCommand.Equals -> null
@@ -215,13 +202,13 @@ class SpeechRecognitionManager @Inject constructor(
             is SpeechCommand.TevkifatCalculate -> "Tevkifat: ${command.amount}"
             is SpeechCommand.Convert -> "${command.value} ${command.fromUnit} → ${command.toUnit}"
             is SpeechCommand.Unknown -> {
-                Log.w(TAG, "Unknown command for text: '$text'")
+                Timber.w("Unknown command for text: '%s'", text)
                 null
             }
         }
 
         _speechState.value = SpeechState.Success(text, parsedExpression)
-        Log.d(TAG, "Final state: Success(text='$text', parsed='$parsedExpression')")
+        Timber.d("Final state: Success(text='%s', parsed='%s')", text, parsedExpression)
     }
 }
 

@@ -5,10 +5,13 @@ import android.content.pm.PackageManager
 import android.content.res.Configuration
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.*
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Backspace
 import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.Science
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -21,6 +24,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.melikyldrm.hesap.speech.SpeechState
 import com.melikyldrm.hesap.ui.components.*
+import com.melikyldrm.hesap.ui.screens.scientific.ScientificCalculatorScreen
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -29,15 +33,43 @@ fun BasicCalculatorScreen(
     onSettingsClick: () -> Unit,
     viewModel: BasicCalculatorViewModel = hiltViewModel()
 ) {
+    var isScientificMode by remember { mutableStateOf(false) }
+
+    Crossfade(
+        targetState = isScientificMode,
+        animationSpec = tween(200),
+        label = "calculatorMode"
+    ) { scientific ->
+        if (scientific) {
+            ScientificCalculatorScreen(
+                onHistoryClick = onHistoryClick,
+                onSettingsClick = onSettingsClick,
+                onToggleMode = { isScientificMode = false }
+            )
+        } else {
+            BasicCalculatorContent(
+                onHistoryClick = onHistoryClick,
+                onSettingsClick = onSettingsClick,
+                onToggleScientific = { isScientificMode = true },
+                viewModel = viewModel
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun BasicCalculatorContent(
+    onHistoryClick: () -> Unit,
+    onSettingsClick: () -> Unit,
+    onToggleScientific: () -> Unit,
+    viewModel: BasicCalculatorViewModel
+) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val speechState by viewModel.speechState.collectAsStateWithLifecycle()
     val configuration = LocalConfiguration.current
     val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
 
-    // Debug: State değişikliklerini logla
-    LaunchedEffect(state.result) {
-        android.util.Log.d("BasicCalcScreen", "State result changed to: ${state.result}, expression: ${state.expression}")
-    }
 
     val context = LocalContext.current
 
@@ -66,6 +98,13 @@ fun BasicCalculatorScreen(
             TopAppBar(
                 title = { Text("Hesap Makinesi") },
                 actions = {
+                    // Bilimsel mod geçiş butonu
+                    IconButton(onClick = onToggleScientific) {
+                        Icon(
+                            imageVector = Icons.Default.Science,
+                            contentDescription = "Bilimsel Mod"
+                        )
+                    }
                     // Mikrofon butonu TopAppBar'da
                     SmallMicrophoneButton(
                         speechState = speechState,
@@ -131,16 +170,14 @@ fun BasicCalculatorScreen(
                         )
                     }
 
-                    // Display - key ile zorla güncelleme
-                    key(state.result, state.expression) {
-                        CalculatorDisplay(
-                            expression = state.expression,
-                            result = state.result,
-                            previousExpression = state.previousExpression,
-                            isError = state.isError,
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
+                    // Display
+                    CalculatorDisplay(
+                        expression = state.expression,
+                        result = state.result,
+                        previousExpression = state.previousExpression,
+                        isError = state.isError,
+                        modifier = Modifier.weight(1f)
+                    )
                 }
 
                 // Sağ: Tuş takımı
@@ -174,16 +211,14 @@ fun BasicCalculatorScreen(
                     )
                 }
 
-                // Display - key ile zorla güncelleme
-                key(state.result, state.expression) {
-                    CalculatorDisplay(
-                        expression = state.expression,
-                        result = state.result,
-                        previousExpression = state.previousExpression,
-                        isError = state.isError,
-                        modifier = Modifier.weight(0.40f) // Increased from 0.35f
-                    )
-                }
+                // Display
+                CalculatorDisplay(
+                    expression = state.expression,
+                    result = state.result,
+                    previousExpression = state.previousExpression,
+                    isError = state.isError,
+                    modifier = Modifier.weight(0.40f)
+                )
 
                 // Button pad
                 BasicButtonPad(

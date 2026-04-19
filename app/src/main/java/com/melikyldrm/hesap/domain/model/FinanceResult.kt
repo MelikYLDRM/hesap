@@ -49,6 +49,44 @@ data class VadeResult(
     val totalInterest: Double       // Toplam faiz
 )
 
+// Kredi Hesaplama Sonucu
+data class KrediResult(
+    val principal: Double,          // Kredi tutarı
+    val monthlyRate: Double,        // Aylık faiz oranı
+    val months: Int,                // Vade (ay)
+    val monthlyPayment: Double,     // Aylık taksit
+    val totalPayment: Double,       // Toplam ödeme
+    val totalInterest: Double,      // Toplam faiz
+    val schedule: List<KrediScheduleItem> // Ödeme planı
+)
+
+data class KrediScheduleItem(
+    val month: Int,
+    val payment: Double,
+    val principal: Double,
+    val interest: Double,
+    val remainingBalance: Double
+)
+
+// BMI Sonucu
+data class BmiResult(
+    val bmi: Double,
+    val category: String,
+    val healthyWeightRange: Pair<Double, Double>,  // kg
+    val height: Double,
+    val weight: Double
+)
+
+// Bahşiş Sonucu
+data class TipResult(
+    val billAmount: Double,
+    val tipPercentage: Double,
+    val tipAmount: Double,
+    val totalAmount: Double,
+    val perPerson: Double,
+    val numberOfPeople: Int
+)
+
 // KDV Rates available in Turkey
 enum class KdvRate(val rate: Double, val displayName: String) {
     RATE_1(0.01, "%1"),
